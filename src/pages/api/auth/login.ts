@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
-import { login } from '../../../lib/services/authService';
+import { createClient } from '@supabase/supabase-js';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     // Leer el body del request
     const contentType = request.headers.get('content-type');
@@ -37,25 +37,35 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const result = await login({ email, password });
+    // Crear cliente de Supabase
+    const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+    const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 
-    if (result.success) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: result.message,
-          user: result.user,
-        }),
-        { 
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    } else {
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Faltan variables de entorno de Supabase');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        flowType: 'pkce',
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+
+    // Intentar login
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login error:', error);
       return new Response(
         JSON.stringify({
           success: false,
-          error: result.error || result.message,
+          error: error.message || 'Error al iniciar sesión',
         }),
         { 
           status: 401,
@@ -63,6 +73,59 @@ export const POST: APIRoute = async ({ request }) => {
         }
       );
     }
+
+    if (!data.session) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'No se pudo obtener la sesión',
+        }),
+        { 
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Guardar tokens en cookies
+    cookies.set('sb-access-token', data.session.access_token, {
+      path: '/',
+      maxAge: data.session.expires_in,
+      secure: import.meta.env.PROD,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+
+    cookies.set('sb-refresh-token', data.session.refresh_token, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+      secure: import.meta.env.PROD,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+
+    // Opcional: guardar datos del usuario
+    if (data.user?.id) {
+      cookies.set('sb-user-id', data.user.id, {
+        path: '/',
+        maxAge: data.session.expires_in,
+        secure: import.meta.env.PROD,
+        httpOnly: false,
+        sameSite: 'lax',
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Inicio de sesión exitoso',
+        user: data.user,
+      }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error: any) {
     console.error('Login error:', error);
     return new Response(

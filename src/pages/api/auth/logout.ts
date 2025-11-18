@@ -1,41 +1,38 @@
 import type { APIRoute } from 'astro';
-import { logout } from '../../../lib/services/authService';
 
 export const prerender = false;
 
-export const POST: APIRoute = async () => {
+export const POST: APIRoute = async ({ cookies }) => {
   try {
-    const result = await logout();
+    // Eliminar cookies de sesión
+    cookies.delete('sb-access-token', {
+      path: '/',
+    });
+    
+    cookies.delete('sb-refresh-token', {
+      path: '/',
+    });
+    
+    cookies.delete('sb-user-id', {
+      path: '/',
+    });
 
-    if (result.success) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: result.message,
-        }),
-        { 
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    } else {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: result.error || result.message,
-        }),
-        { 
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Sesión cerrada exitosamente',
+      }),
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error: any) {
     console.error('Logout error:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Error interno del servidor',
+        error: error.message || 'Error al cerrar sesión',
       }),
       { 
         status: 500,

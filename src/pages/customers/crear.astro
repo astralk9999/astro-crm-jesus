@@ -1,0 +1,104 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CrearClienteForm from '../../components/customers/CrearClienteForm.astro';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+
+if (!token) {
+  return Astro.redirect('/auth/login');
+}
+---
+
+<Layout title="Crear Cliente - CRM Ventas">
+  <div class="crear-cliente-container">
+    <header class="page-header">
+      <div class="header-content">
+        <h1>Crear Nuevo Cliente</h1>
+        <p>Complete el formulario para agregar un nuevo cliente al sistema</p>
+      </div>
+      <a href="/customers" class="btn-secondary">
+        ← Volver a clientes
+      </a>
+    </header>
+
+    <div class="form-container">
+      <CrearClienteForm />
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .crear-cliente-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .header-content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .header-content p {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    color: #4b5563;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #1f2937;
+  }
+
+  .form-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .crear-cliente-container {
+      padding: 1rem;
+    }
+
+    .page-header {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .header-content h1 {
+      font-size: 1.5rem;
+    }
+
+    .form-container {
+      padding: 1.5rem;
+    }
+  }
+</style>

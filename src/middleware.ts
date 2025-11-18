@@ -1,6 +1,6 @@
-import { getCurrentSession } from './lib/services/authService';
+import { defineMiddleware } from 'astro:middleware';
 
-export async function onRequest(context: any, next: any) {
+export const onRequest = defineMiddleware(async (context, next) => {
   // Rutas públicas que no requieren autenticación
   const publicRoutes = [
     '/auth/login',
@@ -16,23 +16,24 @@ export async function onRequest(context: any, next: any) {
     return next();
   }
 
+  // Permitir rutas de API de auth
+  if (currentPath.startsWith('/api/auth/')) {
+    return next();
+  }
+
   // Verificar si es una ruta protegida
   const protectedRoutes = ['/dashboard', '/customers', '/products', '/sales', '/reports'];
   const isProtectedRoute = protectedRoutes.some((route) => currentPath.startsWith(route));
 
   if (isProtectedRoute) {
-    try {
-      const session = await getCurrentSession();
+    // Verificar token en cookies
+    const token = context.cookies.get('sb-access-token')?.value;
 
-      if (!session) {
-        // Redirigir a login si no hay sesión
-        return context.redirect('/auth/login');
-      }
-    } catch (error) {
-      console.error('Middleware error:', error);
+    if (!token) {
+      // Redirigir a login si no hay token
       return context.redirect('/auth/login');
     }
   }
 
   return next();
-}
+});

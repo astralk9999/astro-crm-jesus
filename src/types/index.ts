@@ -25,12 +25,13 @@ export interface Cliente {
   estado: string; // 'activo' | 'inactivo' | 'prospecto' | 'lead'
   fecha_creacion: string;
   fecha_actualizacion: string;
+  fecha_suscripcion: string;
 }
 
 /**
  * Tipo para crear un nuevo cliente (sin campos auto-generados)
  */
-export type ClienteInsert = Omit<Cliente, 'id' | 'fecha_creacion' | 'fecha_actualizacion'>;
+export type ClienteInsert = Omit<Cliente, 'id' | 'fecha_creacion' | 'fecha_actualizacion' | 'fecha_suscripcion'>;
 
 /**
  * Tipo para actualizar un cliente (todos los campos opcionales excepto id)

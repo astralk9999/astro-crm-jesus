@@ -16,6 +16,7 @@ export interface Database {
           estado: string;
           fecha_creacion: string;
           fecha_actualizacion: string;
+          fecha_suscripcion: string;
         };
         Insert: {
           id?: string;
@@ -28,6 +29,7 @@ export interface Database {
           estado?: string;
           fecha_creacion?: string;
           fecha_actualizacion?: string;
+          fecha_suscripcion?: string;
         };
         Update: {
           id?: string;
@@ -40,6 +42,7 @@ export interface Database {
           estado?: string;
           fecha_creacion?: string;
           fecha_actualizacion?: string;
+          fecha_suscripcion?: string;
         };
       };
       interacciones: {

@@ -1,12 +1,17 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from '../../layouts/Layout.astro';
 ---
 
 <Layout title="Dashboard - CRM Ventas">
   <div class="dashboard-container">
     <header class="dashboard-header">
-      <h1>Dashboard</h1>
-      <p>Bienvenido al CRM de Ventas</p>
+      <div>
+        <h1>Dashboard</h1>
+        <p>Bienvenido al CRM de Ventas</p>
+      </div>
+      <a href="/customers/crear" class="btn-crear-cliente">
+        + Crear Cliente
+      </a>
     </header>
 
     <div class="stats-grid">
@@ -58,11 +63,40 @@ import Layout from '../layouts/Layout.astro';
 
   .dashboard-header {
     margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
   }
 
   .dashboard-header h1 {
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
+  }
+
+  .btn-crear-cliente {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-crear-cliente:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-crear-cliente:active {
+    transform: translateY(0);
   }
 
   .stats-grid {
@@ -114,6 +148,16 @@ import Layout from '../layouts/Layout.astro';
   }
 
   @media (max-width: 768px) {
+    .dashboard-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .btn-crear-cliente {
+      width: 100%;
+      justify-content: center;
+    }
+
     .dashboard-content {
       grid-template-columns: 1fr;
     }

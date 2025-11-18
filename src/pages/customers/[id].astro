@@ -1,0 +1,705 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+
+if (!token) {
+  return Astro.redirect('/auth/login');
+}
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/customers');
+}
+---
+
+<Layout title="Detalle Cliente - CRM Ventas">
+  <div class="cliente-detalle-container">
+    <div id="loadingState" class="loading">
+      <div class="spinner-large"></div>
+      <p>Cargando información del cliente...</p>
+    </div>
+
+    <div id="clienteContent" style="display: none;">
+      <!-- Alerta de suscripción próxima a vencer -->
+      <div id="alertaSuscripcion" style="display: none;">
+        <div class="alert-suscripcion">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-content">
+            <h3 id="alertaTitulo"></h3>
+            <p id="alertaMensaje"></p>
+            <button id="btnRenovar" class="btn-renovar">🔄 Renovar Suscripción</button>
+          </div>
+        </div>
+      </div>
+
+      <header class="page-header">
+        <div class="header-content">
+          <div class="breadcrumb">
+            <a href="/customers">← Volver a clientes</a>
+          </div>
+          <div class="cliente-title">
+            <h1 id="clienteNombre"></h1>
+            <span id="clienteEstado" class="estado-badge"></span>
+          </div>
+          <p id="clienteEmpresa" class="cliente-empresa"></p>
+        </div>
+        <div class="header-actions">
+          <button id="editBtn" class="btn-secondary">✏️ Editar</button>
+          <button id="deleteBtn" class="btn-danger">🗑️ Eliminar</button>
+        </div>
+      </header>
+
+      <div class="content-grid">
+        <!-- Información del cliente -->
+        <section class="info-card">
+          <h2 class="card-title">Información de Contacto</h2>
+          <div class="info-list">
+            <div class="info-item">
+              <span class="info-label">Email:</span>
+              <span id="clienteEmail" class="info-value"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Teléfono:</span>
+              <span id="clienteTelefono" class="info-value"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Empresa:</span>
+              <span id="clienteEmpresaInfo" class="info-value"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fecha de registro:</span>
+              <span id="clienteFecha" class="info-value"></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fecha de suscripción:</span>
+              <span id="clienteFechaSuscripcion" class="info-value"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Notas -->
+        <section class="info-card">
+          <h2 class="card-title">Notas</h2>
+          <div id="clienteNotas" class="notas-content"></div>
+        </section>
+
+        <!-- Estadísticas -->
+        <section class="info-card">
+          <h2 class="card-title">Estadísticas</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="totalTransacciones">-</div>
+              <div class="stat-label">Transacciones</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="totalInteracciones">-</div>
+              <div class="stat-label">Interacciones</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Acciones rápidas -->
+        <section class="info-card">
+          <h2 class="card-title">Acciones Rápidas</h2>
+          <div class="quick-actions">
+            <button class="action-btn" onclick="alert('Función en desarrollo')">
+              📧 Enviar Email
+            </button>
+            <button class="action-btn" onclick="alert('Función en desarrollo')">
+              📞 Registrar Llamada
+            </button>
+            <button class="action-btn" onclick="alert('Función en desarrollo')">
+              💰 Nueva Transacción
+            </button>
+            <button class="action-btn" onclick="alert('Función en desarrollo')">
+              📝 Añadir Nota
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div id="errorState" style="display: none;" class="error-state">
+      <h2>Error al cargar el cliente</h2>
+      <p id="errorMessage"></p>
+      <a href="/customers" class="btn-primary">Volver a clientes</a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .cliente-detalle-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .alert-suscripcion {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-left: 4px solid #dc2626;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+  }
+
+  .alert-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .alert-content {
+    flex: 1;
+  }
+
+  .alert-content h3 {
+    color: #991b1b;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.125rem;
+  }
+
+  .alert-content p {
+    color: #7f1d1d;
+    margin: 0 0 1rem 0;
+  }
+
+  .btn-renovar {
+    background: #dc2626;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-renovar:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+  }
+
+  .loading {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+  }
+
+  .spinner-large {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .breadcrumb a {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+  }
+
+  .breadcrumb a:hover {
+    color: #3b82f6;
+  }
+
+  .cliente-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .cliente-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .cliente-empresa {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-top: 0.25rem;
+  }
+
+  .estado-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .estado-activo {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .estado-prospecto {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .estado-lead {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .estado-inactivo {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .btn-secondary,
+  .btn-danger {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary {
+    background: white;
+    color: #4b5563;
+    border-color: #e5e7eb;
+  }
+
+  .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .btn-danger {
+    background: white;
+    color: #dc2626;
+    border-color: #fecaca;
+  }
+
+  .btn-danger:hover {
+    background: #fee2e2;
+    border-color: #dc2626;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .info-card {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .info-value {
+    color: #1f2937;
+    font-size: 1rem;
+  }
+
+  .notas-content {
+    color: #4b5563;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #3b82f6;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+
+  .quick-actions {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .action-btn {
+    padding: 0.75rem 1rem;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    text-align: left;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover {
+    background: white;
+    border-color: #3b82f6;
+    color: #3b82f6;
+  }
+
+  .error-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .error-state h2 {
+    color: #dc2626;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-state p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-primary:hover {
+    background: #2563eb;
+  }
+
+  @media (max-width: 768px) {
+    .cliente-detalle-container {
+      padding: 1rem;
+    }
+
+    .page-header {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .btn-secondary,
+    .btn-danger {
+      flex: 1;
+    }
+
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script define:vars={{ clienteId: id }}>
+  async function cargarCliente() {
+    try {
+      const response = await fetch(`/api/customers/${clienteId}`);
+      
+      if (!response.ok) {
+        throw new Error('Cliente no encontrado');
+      }
+
+      const result = await response.json();
+      const cliente = result.data;
+
+      // Mostrar información del cliente
+      const nombreEl = document.getElementById('clienteNombre');
+      const estadoEl = document.getElementById('clienteEstado');
+      const empresaEl = document.getElementById('clienteEmpresa');
+      const emailEl = document.getElementById('clienteEmail');
+      const telefonoEl = document.getElementById('clienteTelefono');
+      const empresaInfoEl = document.getElementById('clienteEmpresaInfo');
+      const fechaEl = document.getElementById('clienteFecha');
+      const notasEl = document.getElementById('clienteNotas');
+      const transaccionesEl = document.getElementById('totalTransacciones');
+      const interaccionesEl = document.getElementById('totalInteracciones');
+      const loadingEl = document.getElementById('loadingState');
+      const contentEl = document.getElementById('clienteContent');
+
+      if (nombreEl) nombreEl.textContent = cliente.nombre;
+      if (estadoEl) {
+        estadoEl.textContent = cliente.estado;
+        estadoEl.className = `estado-badge estado-${cliente.estado}`;
+      }
+      
+      if (cliente.empresa && empresaEl) {
+        empresaEl.textContent = cliente.empresa;
+      } else if (empresaEl) {
+        empresaEl.style.display = 'none';
+      }
+
+      if (emailEl) emailEl.textContent = cliente.correo_electronico;
+      if (telefonoEl) telefonoEl.textContent = cliente.telefono || 'No especificado';
+      if (empresaInfoEl) empresaInfoEl.textContent = cliente.empresa || 'No especificada';
+      
+      const fecha = new Date(cliente.fecha_creacion);
+      if (fechaEl) {
+        fechaEl.textContent = fecha.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+
+      const fechaSuscripcionEl = document.getElementById('clienteFechaSuscripcion');
+      if (fechaSuscripcionEl && cliente.fecha_suscripcion) {
+        const fechaSuscripcion = new Date(cliente.fecha_suscripcion);
+        fechaSuscripcionEl.textContent = fechaSuscripcion.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        // Verificar si la suscripción vence en menos de 7 días
+        verificarYMostrarAlertaSuscripcion(cliente, fechaSuscripcion);
+      }
+
+      if (notasEl) {
+        if (cliente.notas) {
+          notasEl.textContent = cliente.notas;
+        } else {
+          notasEl.textContent = 'Sin notas';
+          notasEl.style.color = '#9ca3af';
+        }
+      }
+
+      // Estadísticas (placeholders por ahora)
+      if (transaccionesEl) transaccionesEl.textContent = '0';
+      if (interaccionesEl) interaccionesEl.textContent = '0';
+
+      // Mostrar contenido
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (contentEl) contentEl.style.display = 'block';
+
+      // Event listeners para acciones
+      document.getElementById('editBtn')?.addEventListener('click', () => {
+        alert('Función de edición en desarrollo');
+      });
+
+      document.getElementById('deleteBtn')?.addEventListener('click', async () => {
+        if (confirm('¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.')) {
+          const deleteBtn = document.getElementById('deleteBtn');
+          if (deleteBtn) {
+            deleteBtn.setAttribute('disabled', 'true');
+          }
+          
+          try {
+            const response = await fetch(`/api/customers/${clienteId}`, {
+              method: 'DELETE',
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+              throw new Error(result.error || 'Error al eliminar el cliente');
+            }
+
+            // Mostrar mensaje de éxito
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message success';
+            messageDiv.textContent = '✓ Cliente eliminado exitosamente';
+            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 1rem; background: #d1fae5; color: #065f46; border: 1px solid #10b981; border-radius: 8px; z-index: 1000;';
+            document.body.appendChild(messageDiv);
+
+            // Redirigir después de 1.5 segundos
+            setTimeout(() => {
+              window.location.href = '/customers';
+            }, 1500);
+
+          } catch (error) {
+            console.error('Error:', error);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message error';
+            messageDiv.textContent = `✗ ${error instanceof Error ? error.message : 'Error al eliminar el cliente'}`;
+            messageDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 1rem; background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; border-radius: 8px; z-index: 1000;';
+            document.body.appendChild(messageDiv);
+
+            const btn = document.getElementById('deleteBtn');
+            if (btn) {
+              btn.removeAttribute('disabled');
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      const loadingEl = document.getElementById('loadingState');
+      const errorStateEl = document.getElementById('errorState');
+      const errorMessageEl = document.getElementById('errorMessage');
+      
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorStateEl) errorStateEl.style.display = 'block';
+      if (errorMessageEl) {
+        errorMessageEl.textContent = error instanceof Error ? error.message : 'Error desconocido';
+      }
+    }
+  }
+
+  /**
+   * Verifica si la suscripción vence en menos de 7 días y muestra una alerta
+   */
+  function verificarYMostrarAlertaSuscripcion(cliente, fechaSuscripcion) {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const fechaSuscripcionDate = new Date(fechaSuscripcion);
+    fechaSuscripcionDate.setHours(0, 0, 0, 0);
+
+    // Calcular fecha de vencimiento (365 días después)
+    const fechaVencimiento = new Date(fechaSuscripcionDate);
+    fechaVencimiento.setFullYear(fechaVencimiento.getFullYear() + 1);
+
+    // Calcular días restantes
+    const diferencia = fechaVencimiento.getTime() - hoy.getTime();
+    const diasRestantes = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+
+    const alertaEl = document.getElementById('alertaSuscripcion');
+    const alertaTituloEl = document.getElementById('alertaTitulo');
+    const alertaMensajeEl = document.getElementById('alertaMensaje');
+    const btnRenovarEl = document.getElementById('btnRenovar');
+
+    if (diasRestantes <= 7 && diasRestantes > 0) {
+      // Mostrar alerta
+      if (alertaEl) alertaEl.style.display = 'block';
+      if (alertaTituloEl) {
+        alertaTituloEl.textContent = `⚠️ Suscripción próxima a vencer`;
+      }
+      if (alertaMensajeEl) {
+        alertaMensajeEl.textContent = `Tu suscripción vence en ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''}. ${fechaVencimiento.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+      }
+
+      // Enviar email de notificación
+      enviarNotificacion(cliente, diasRestantes, fechaSuscripcion, fechaVencimiento);
+    } else if (diasRestantes <= 0) {
+      // Suscripción vencida
+      if (alertaEl) alertaEl.style.display = 'block';
+      if (alertaTituloEl) {
+        alertaTituloEl.textContent = '❌ Suscripción Vencida';
+      }
+      if (alertaMensajeEl) {
+        alertaMensajeEl.textContent = 'Tu suscripción ha vencido. Por favor, renuévala cuanto antes.';
+      }
+    }
+
+    // Listener para botón renovar
+    if (btnRenovarEl) {
+      btnRenovarEl.addEventListener('click', () => {
+        alert('Función de renovación en desarrollo. Por favor, contacta a soporte.');
+      });
+    }
+  }
+
+  /**
+   * Envía una notificación por email
+   */
+  async function enviarNotificacion(cliente, diasRestantes, fechaSuscripcion, fechaVencimiento) {
+    try {
+      const response = await fetch('/api/notifications/subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clienteId: cliente.id,
+          nombre: cliente.nombre,
+          email: cliente.correo_electronico,
+          diasRestantes: diasRestantes,
+          fechaSuscripcion: fechaSuscripcion.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          fechaVencimiento: fechaVencimiento.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Notificación de suscripción enviada');
+      }
+    } catch (error) {
+      console.error('Error al enviar notificación:', error);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', cargarCliente);
+</script>
