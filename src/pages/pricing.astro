@@ -63,10 +63,10 @@ import Layout from '../layouts/Layout.astro';
               <span>Soporte por email</span>
             </li>
           </ul>
-          <a href="https://buy.stripe.com/test_9B6cMY6Oz9rqbYTcco08g00" class="btn-subscribe monthly" target="_blank" rel="noopener">
+          <button class="btn-subscribe monthly" data-plan="monthly" data-link="https://buy.stripe.com/test_9B6cMY6Oz9rqbYTcco08g00">
             <span>Suscribirse</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          </a>
+          </button>
         </div>
 
         <!-- Plan Anual - Destacado -->
@@ -110,10 +110,10 @@ import Layout from '../layouts/Layout.astro';
               <span>Exportación de datos</span>
             </li>
           </ul>
-          <a href="https://buy.stripe.com/test_5kQ14g1uf476fb51xK08g02" class="btn-subscribe annual" target="_blank" rel="noopener">
+          <button class="btn-subscribe annual" data-plan="annual" data-link="https://buy.stripe.com/test_5kQ14g1uf476fb51xK08g02">
             <span>Suscribirse Anual</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          </a>
+          </button>
         </div>
 
         <!-- Licencia Definitiva -->
@@ -156,10 +156,10 @@ import Layout from '../layouts/Layout.astro';
               <span>Soporte VIP</span>
             </li>
           </ul>
-          <a href="https://buy.stripe.com/test_eVq14g7SD7ji6EzgsE08g01" class="btn-subscribe lifetime" target="_blank" rel="noopener">
+          <button class="btn-subscribe lifetime" data-plan="lifetime" data-link="https://buy.stripe.com/test_eVq14g7SD7ji6EzgsE08g01">
             <span>Comprar Ahora</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-          </a>
+          </button>
         </div>
       </div>
 
@@ -173,7 +173,111 @@ import Layout from '../layouts/Layout.astro';
         <p class="guarantee">30 días de garantía de devolución del dinero</p>
       </div>
     </div>
+
+    <!-- Modal para email si no está autenticado -->
+    <div id="emailModal" class="modal hidden">
+      <div class="modal-content">
+        <button class="modal-close" id="closeModal">&times;</button>
+        <h3>Ingresa tu email</h3>
+        <p>Para continuar con el pago, necesitamos tu email</p>
+        <input type="email" id="emailInput" placeholder="tu@email.com" />
+        <button id="confirmEmail" class="btn-confirm">Continuar al pago</button>
+      </div>
+    </div>
   </div>
+
+  <script>
+    import { supabase } from '../lib/database/supabase';
+
+    // Obtener usuario actual
+    async function getCurrentUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
+
+    // Crear suscripción pendiente y redirigir
+    async function handleSubscribe(planType: string, stripeLink: string) {
+      const user = await getCurrentUser();
+      let email = user?.email;
+
+      if (!email) {
+        // Mostrar modal para pedir email
+        const modal = document.getElementById('emailModal');
+        const emailInput = document.getElementById('emailInput') as HTMLInputElement;
+        const confirmBtn = document.getElementById('confirmEmail');
+        
+        modal?.classList.remove('hidden');
+        
+        return new Promise<void>((resolve) => {
+          confirmBtn?.addEventListener('click', async () => {
+            email = emailInput?.value;
+            if (!email || !email.includes('@')) {
+              alert('Por favor ingresa un email válido');
+              return;
+            }
+            modal?.classList.add('hidden');
+            await createSubscriptionAndRedirect(email, planType, stripeLink, user?.id);
+            resolve();
+          }, { once: true });
+        });
+      } else {
+        await createSubscriptionAndRedirect(email, planType, stripeLink, user?.id);
+      }
+    }
+
+    async function createSubscriptionAndRedirect(email: string, planType: string, stripeLink: string, userId?: string) {
+      try {
+        // Crear suscripción pendiente en la base de datos
+        const response = await fetch('/api/subscriptions/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, planType, userId }),
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('Suscripción pendiente creada:', result.subscription);
+          // Redirigir a Stripe
+          window.open(stripeLink, '_blank');
+        } else {
+          console.error('Error:', result.error);
+          // Aún así redirigir a Stripe
+          window.open(stripeLink, '_blank');
+        }
+      } catch (error) {
+        console.error('Error creating subscription:', error);
+        // Aún así redirigir a Stripe
+        window.open(stripeLink, '_blank');
+      }
+    }
+
+    // Event listeners para botones
+    document.querySelectorAll('.btn-subscribe').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = e.currentTarget as HTMLElement;
+        const planType = target.dataset.plan;
+        const stripeLink = target.dataset.link;
+        
+        if (planType && stripeLink) {
+          handleSubscribe(planType, stripeLink);
+        }
+      });
+    });
+
+    // Cerrar modal
+    document.getElementById('closeModal')?.addEventListener('click', () => {
+      document.getElementById('emailModal')?.classList.add('hidden');
+    });
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('emailModal')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.getElementById('emailModal')?.classList.add('hidden');
+      }
+    });
+  </script>
 </Layout>
 
 <style>
@@ -572,5 +676,106 @@ import Layout from '../layouts/Layout.astro';
     .amount {
       font-size: 2.5rem;
     }
+  }
+
+  /* Button cursor */
+  .btn-subscribe {
+    cursor: pointer;
+  }
+
+  /* Modal styles */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal.hidden {
+    display: none;
+  }
+
+  .modal-content {
+    background: rgba(10, 15, 25, 0.95);
+    border: 1px solid rgba(0, 255, 242, 0.3);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0, 255, 242, 0.15);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .modal-close:hover {
+    color: #00fff2;
+  }
+
+  .modal-content h3 {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .modal-content p {
+    color: #94a3b8;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-content input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 242, 0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+  }
+
+  .modal-content input:focus {
+    outline: none;
+    border-color: #00fff2;
+    box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+  }
+
+  .modal-content input::placeholder {
+    color: #64748b;
+  }
+
+  .btn-confirm {
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(255, 0, 255, 0.15));
+    border: 1px solid #00fff2;
+    border-radius: 10px;
+    color: #00fff2;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-confirm:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.3), rgba(255, 0, 255, 0.25));
+    box-shadow: 0 0 25px rgba(0, 255, 242, 0.4);
   }
 </style>
