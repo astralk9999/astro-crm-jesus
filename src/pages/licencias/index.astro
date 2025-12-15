@@ -1,0 +1,768 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAuthenticated, getUserProfile } from '../../lib/services/authService';
+import { getLicenses, getExpiredLicenses } from '../../lib/services/licensesService';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+if (!authenticated) {
+  return Astro.redirect('/login');
+}
+
+// Obtener perfil del usuario
+const userProfile = await getUserProfile(token);
+
+// Obtener lista de licencias
+const licensesResponse = await getLicenses(token);
+console.log('Licenses Response Success:', licensesResponse.success);
+if (!licensesResponse.success) {
+  console.error('Error fetching licenses:', licensesResponse.error);
+}
+
+let licenses = [];
+if (licensesResponse.success && licensesResponse.data) {
+  const rawLicenses = Array.isArray(licensesResponse.data) ? licensesResponse.data : [licensesResponse.data];
+  // Procesar licencias con datos calculados
+  licenses = rawLicenses.map(license => {
+    const daysRemaining = license.end_date ? getDaysRemaining(license.end_date) : null;
+    const isExpired = daysRemaining !== null && daysRemaining < 0;
+    const isExpiringSoon = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 30;
+    
+    return {
+      ...license,
+      daysRemaining,
+      isExpired,
+      isExpiringSoon
+    };
+  });
+}
+
+// Obtener licencias vencidas
+const expiredResponse = await getExpiredLicenses(token);
+const expiredLicenses = expiredResponse.success ? expiredResponse.data : [];
+
+// Función para formatear fechas
+function formatDate(date: string) {
+  return new Date(date).toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+// Función para calcular días restantes
+function getDaysRemaining(endDate: string) {
+  const end = new Date(endDate);
+  const today = new Date();
+  const diffTime = end.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
+// Función para obtener el color del estado
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'activa':
+      return 'bg-green-100 text-green-800';
+    case 'inactiva':
+      return 'bg-gray-100 text-gray-800';
+    case 'pendiente_pago':
+      return 'bg-yellow-100 text-yellow-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+}
+
+// Función para obtener el texto del estado
+function getStatusText(status: string) {
+  switch (status) {
+    case 'activa':
+      return 'Activa';
+    case 'inactiva':
+      return 'Inactiva';
+    case 'pendiente_pago':
+      return 'Pendiente de Pago';
+    default:
+      return status;
+  }
+}
+---
+
+<Layout title="Gestión de Licencias - SoftControl CRM">
+  <div class="page-container">
+    <!-- Encabezado de página -->
+    <header class="page-header animate-in">
+      <div class="header-info">
+        <div class="header-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <h1>Licencias</h1>
+          <p>Gestiona las licencias asignadas a los clientes</p>
+        </div>
+      </div>
+      {userProfile?.role === 'admin' && (
+        <a href="/licencias/nueva" class="btn-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Nueva Licencia
+        </a>
+      )}
+    </header>
+
+    <!-- Alertas -->
+    {expiredLicenses && expiredLicenses.length > 0 && (
+      <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <span class="font-semibold">Atención:</span>
+          <span class="ml-1">Hay {expiredLicenses.length} suscripción(es) vencida(s) que requieren renovación.</span>
+        </div>
+      </div>
+    )}
+
+    <!-- Buscador -->
+    <div class="search-section mb-6 animate-in animate-delay-1">
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Buscar licencias por cliente, producto o clave..."
+          class="search-input"
+        />
+      </div>
+      <div class="search-stats">
+        <span class="stats-badge">{licenses?.length || 0} licencias</span>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mb-6 flex flex-wrap gap-2 animate-in animate-delay-2">
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all active" data-filter="all">
+        Todas
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all" data-filter="activa">
+        Activas
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all" data-filter="inactiva">
+        Inactivas
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all" data-filter="pendiente_pago">
+        Pendiente Pago
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all" data-filter="licencia_unica">
+        Licencias Únicas
+      </button>
+      <button class="filter-btn px-4 py-2 rounded-lg border font-medium text-sm transition-all" data-filter="suscripcion">
+        Suscripciones
+      </button>
+    </div>
+
+    <!-- Tabla de licencias -->
+    <div class="bg-white rounded-lg shadow overflow-x-auto animate-in animate-delay-3">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Cliente
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Producto
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Tipo
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Fechas
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Estado
+            </th>
+            <th class="relative px-6 py-3">
+              <span class="sr-only">Acciones</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200" id="licensesTableBody">
+          {licenses && licenses.length > 0 ? (
+            licenses.map((license) => (
+                <tr 
+                  data-status={license.status}
+                  data-type={license.type}
+                  class="license-row"
+                >
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div class="text-sm font-medium text-gray-900 license-client-name">
+                        {license.client && license.client.name ? license.client.name : 'Cliente no encontrado'}
+                      </div>
+                      <div class="text-sm text-gray-500">
+                        {license.client?.company || ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900 license-product-name">
+                      {license.product && license.product.name ? license.product.name : 'Producto no encontrado'}
+                    </div>
+                    {license.license_key && (
+                      <div class="text-xs text-gray-400 license-key font-mono">
+                        {license.license_key}
+                      </div>
+                    )}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      license.type === 'licencia_unica' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-purple-100 text-purple-800'
+                    }`}>
+                      {license.type === 'licencia_unica' ? 'Licencia Única' : 'Suscripción'}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <div>
+                      <div class="text-gray-900">
+                        Inicio: {formatDate(license.start_date)}
+                      </div>
+                      {license.type === 'suscripcion' && license.end_date && (
+                        <div class={license.isExpired ? 'text-red-600 font-semibold' : license.isExpiringSoon ? 'text-yellow-600' : 'text-gray-500'}>
+                          Fin: {formatDate(license.end_date)}
+                          {license.daysRemaining !== null && (
+                            <span class="ml-1">
+                              ({license.isExpired 
+                                ? `Vencida hace ${Math.abs(license.daysRemaining)} días` 
+                                : license.daysRemaining === 0 
+                                  ? 'Vence hoy' 
+                                  : `${license.daysRemaining} días restantes`})
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(license.status)}`}>
+                      {getStatusText(license.status)}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a href={`/licencias/${license.id}`} class="text-blue-600 hover:text-blue-900 mr-3">
+                      Ver
+                    </a>
+                    {userProfile?.role === 'admin' && (
+                      <div class="inline-block">
+                        <a href={`/licencias/${license.id}/editar`} class="text-indigo-600 hover:text-indigo-900 mr-3">
+                          Editar
+                        </a>
+                        <button 
+                          data-license-id={license.id}
+                          data-client-name={license.client && license.client.name ? license.client.name : ''}
+                          data-product-name={license.product && license.product.name ? license.product.name : ''}
+                          class="delete-license text-red-600 hover:text-red-900"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+            ))
+          ) : (
+            <tr>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                No hay licencias registradas
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Confirmar eliminación</h3>
+        <div class="mt-2 px-7 py-3">
+          <p class="text-sm text-gray-500">
+            ¿Estás seguro de que deseas eliminar la licencia del cliente <span id="clientName" class="font-semibold"></span> 
+            para el producto <span id="productName" class="font-semibold"></span>? 
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+        <div class="items-center px-4 py-3">
+          <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+            Eliminar
+          </button>
+          <button id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { deleteLicense, getLicensesByStatus, searchLicenses } from '../../lib/services/licensesService';
+
+    // Búsqueda de licencias
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const licenseRows = document.querySelectorAll('.license-row');
+    let searchTimeout: NodeJS.Timeout;
+
+    searchInput?.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const searchTerm = (e.target as HTMLInputElement).value.toLowerCase().trim();
+
+      searchTimeout = setTimeout(() => {
+        // Filtrar filas localmente para mejor rendimiento
+        licenseRows.forEach(row => {
+          const rowElement = row as HTMLElement;
+          const clientName = rowElement.querySelector('.license-client-name')?.textContent?.toLowerCase() || '';
+          const productName = rowElement.querySelector('.license-product-name')?.textContent?.toLowerCase() || '';
+          const licenseKey = rowElement.querySelector('.license-key')?.textContent?.toLowerCase() || '';
+          
+          if (searchTerm === '' || 
+              clientName.includes(searchTerm) || 
+              productName.includes(searchTerm) || 
+              licenseKey.includes(searchTerm)) {
+            rowElement.style.display = '';
+          } else {
+            rowElement.style.display = 'none';
+          }
+        });
+
+        // Actualizar contador visible
+        const visibleRows = document.querySelectorAll('.license-row:not([style*="display: none"])');
+        const statsBadge = document.querySelector('.stats-badge');
+        if (statsBadge) {
+          statsBadge.textContent = `${visibleRows.length} licencias`;
+        }
+      }, 200);
+    });
+
+    // Manejo de filtros
+    const filterButtons = document.querySelectorAll('.filter-btn');
+
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Actualizar botón activo
+        filterButtons.forEach(btn => btn.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600'));
+        button.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+        
+        const filter = button.dataset.filter;
+        
+        // Mostrar/ocultar filas según filtro
+        licenseRows.forEach(row => {
+          const rowElement = row;
+          const status = rowElement.dataset.status;
+          const type = rowElement.dataset.type;
+          
+          if (filter === 'all') {
+            rowElement.style.display = '';
+          } else if (filter === status || filter === type) {
+            rowElement.style.display = '';
+          } else {
+            rowElement.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Estilizar el botón activo inicial
+    const activeBtn = document.querySelector('.filter-btn.active');
+    if (activeBtn) {
+      activeBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+    }
+
+    // Estilizar los demás botones
+    filterButtons.forEach(btn => {
+      if (!btn.classList.contains('active')) {
+        btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300', 'hover:bg-gray-50');
+      }
+    });
+
+    // Manejo del modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    const clientNameSpan = document.getElementById('clientName');
+    const productNameSpan = document.getElementById('productName');
+    let licenseToDelete = null;
+
+    document.querySelectorAll('.delete-license').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const target = e.currentTarget;
+        licenseToDelete = target.dataset.licenseId || null;
+        const clientName = target.dataset.clientName || '';
+        const productName = target.dataset.productName || '';
+        
+        if (clientNameSpan) {
+          clientNameSpan.textContent = clientName;
+        }
+        if (productNameSpan) {
+          productNameSpan.textContent = productName;
+        }
+        
+        deleteModal?.classList.remove('hidden');
+      });
+    });
+
+    cancelDeleteBtn?.addEventListener('click', () => {
+      deleteModal?.classList.add('hidden');
+      licenseToDelete = null;
+    });
+
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      if (licenseToDelete) {
+        const response = await deleteLicense(licenseToDelete);
+        if (response.success) {
+          window.location.reload();
+        } else {
+          alert('Error al eliminar la licencia: ' + response.error);
+        }
+      }
+      deleteModal?.classList.add('hidden');
+      licenseToDelete = null;
+    });
+
+    deleteModal?.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        deleteModal.classList.add('hidden');
+        licenseToDelete = null;
+      }
+    });
+  </script>
+
+  <style>
+    /* ============================================
+       LICENCIAS - ESTILO FUTURISTA NEÓN
+       ============================================ */
+    
+    /* Contenedor principal */
+    .page-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Encabezado de página */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(191, 0, 255, 0.15);
+      border: 1px solid rgba(191, 0, 255, 0.3);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bf00ff;
+      box-shadow: 0 0 20px rgba(191, 0, 255, 0.2);
+    }
+
+    .header-icon svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .header-info h1 {
+      font-size: 1.875rem;
+      font-weight: 800;
+      color: white;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .header-info p {
+      font-size: 0.9375rem;
+      color: #94a3b8;
+      margin: 0.25rem 0 0;
+    }
+
+    /* Sobrescribir colores grises de Tailwind */
+    .text-gray-900, h1, h3 {
+      color: #ffffff !important;
+    }
+    
+    .text-gray-600, .text-gray-500, .text-gray-700, p {
+      color: #e2e8f0 !important;
+    }
+    
+    .text-gray-800 {
+      color: #ffffff !important;
+    }
+    
+    .text-gray-400 {
+      color: #94a3b8 !important;
+    }
+    
+    /* Títulos con glow */
+    h1 {
+      text-shadow: 0 0 30px rgba(191, 0, 255, 0.2);
+    }
+    
+    /* Sección de búsqueda */
+    .search-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .search-wrapper .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: #00fff2;
+      opacity: 0.5;
+      pointer-events: none;
+      transition: all 0.3s;
+    }
+
+    .search-wrapper .search-input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(0, 255, 242, 0.2);
+      border-radius: 12px;
+      font-size: 0.9375rem;
+      color: white;
+      transition: all 0.3s;
+    }
+
+    .search-wrapper .search-input:focus {
+      outline: none;
+      border-color: #00fff2;
+      background: rgba(0, 255, 242, 0.05);
+      box-shadow: 0 0 20px rgba(0, 255, 242, 0.2);
+    }
+
+    .search-wrapper .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .stats-badge {
+      display: inline-flex;
+      padding: 0.5rem 1rem;
+      background: rgba(191, 0, 255, 0.15);
+      border: 1px solid rgba(191, 0, 255, 0.3);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #bf00ff;
+    }
+
+    /* Clave de licencia */
+    .license-key {
+      color: #bf00ff !important;
+      background: rgba(191, 0, 255, 0.1);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      margin-top: 0.25rem;
+      display: inline-block;
+    }
+    
+    /* Fondo de la tabla - Glassmorphism */
+    .bg-white {
+      background: rgba(10, 15, 25, 0.8) !important;
+      border: 1px solid rgba(0, 255, 242, 0.15) !important;
+      backdrop-filter: blur(10px);
+    }
+    
+    .bg-gray-50 {
+      background: rgba(0, 255, 242, 0.05) !important;
+    }
+    
+    /* Bordes de la tabla */
+    .divide-gray-200 > * {
+      border-color: rgba(0, 255, 242, 0.1) !important;
+    }
+    
+    .divide-y > tr {
+      border-color: rgba(0, 255, 242, 0.1) !important;
+    }
+    
+    /* Headers de tabla */
+    thead th {
+      color: #00fff2 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    
+    /* Filas de tabla hover */
+    tbody tr:hover {
+      background: rgba(0, 255, 242, 0.05) !important;
+    }
+    
+    /* Filtros - Botón activo */
+    .filter-btn.active {
+      background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(0, 180, 255, 0.2)) !important;
+      border: 1px solid #00fff2 !important;
+      color: #00fff2 !important;
+      box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+    }
+    
+    /* Filtros - Botones inactivos */
+    .filter-btn:not(.active) {
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #e2e8f0 !important;
+    }
+    
+    .filter-btn:not(.active):hover {
+      border-color: rgba(0, 255, 242, 0.3) !important;
+      color: #00fff2 !important;
+      background: rgba(0, 255, 242, 0.05) !important;
+    }
+    
+    /* Estados de licencia - NEÓN */
+    .bg-green-100 {
+      background: rgba(0, 255, 136, 0.15) !important;
+      border: 1px solid rgba(0, 255, 136, 0.4) !important;
+    }
+    
+    .text-green-800 {
+      color: #00ff88 !important;
+    }
+    
+    .bg-yellow-100 {
+      background: rgba(255, 255, 0, 0.15) !important;
+      border: 1px solid rgba(255, 255, 0, 0.4) !important;
+    }
+    
+    .text-yellow-800 {
+      color: #ffff00 !important;
+    }
+    
+    .bg-gray-100 {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    /* Alerta de vencidas */
+    .bg-red-50 {
+      background: rgba(255, 45, 149, 0.1) !important;
+      border: 1px solid rgba(255, 45, 149, 0.3) !important;
+    }
+    
+    .text-red-800 {
+      color: #ff2d95 !important;
+    }
+    
+    .border-red-200 {
+      border-color: rgba(255, 45, 149, 0.3) !important;
+    }
+    
+    /* Links */
+    .text-blue-600 {
+      color: #00fff2 !important;
+    }
+    
+    .text-blue-600:hover {
+      color: #00fff2 !important;
+      text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+    }
+    
+    /* Botones de acción */
+    .text-indigo-600 {
+      color: #00b4ff !important;
+    }
+    
+    .text-indigo-600:hover {
+      color: #00b4ff !important;
+      filter: drop-shadow(0 0 8px rgba(0, 180, 255, 0.5));
+    }
+    
+    .text-red-600 {
+      color: #ff2d95 !important;
+    }
+    
+    .text-red-600:hover {
+      color: #ff2d95 !important;
+      filter: drop-shadow(0 0 8px rgba(255, 45, 149, 0.5));
+    }
+    
+    /* Modal futurista */
+    .bg-gray-600 {
+      background: rgba(5, 5, 8, 0.9) !important;
+    }
+    
+    #deleteModal > div {
+      background: rgba(10, 15, 25, 0.95) !important;
+      border: 1px solid rgba(255, 45, 149, 0.3) !important;
+      box-shadow: 0 0 40px rgba(255, 45, 149, 0.2) !important;
+    }
+    
+    .bg-red-100 {
+      background: rgba(255, 45, 149, 0.15) !important;
+    }
+    
+    .text-red-700 {
+      color: #ff2d95 !important;
+    }
+    
+    /* Estado vacío */
+    .text-center p {
+      color: #94a3b8 !important;
+    }
+    
+    /* Badges y tipos */
+    .rounded-full {
+      border-radius: 9999px;
+    }
+    
+    /* Días restantes */
+    .text-orange-600 {
+      color: #ff6b00 !important;
+    }
+    
+    /* Texto más legible en celdas */
+    td {
+      color: #e2e8f0 !important;
+    }
+    
+    td .font-medium {
+      color: #ffffff !important;
+    }
+  </style>
+</Layout>

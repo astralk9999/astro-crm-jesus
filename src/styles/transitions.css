@@ -1,0 +1,232 @@
+/* ============================================
+   TRANSICIONES DE PÁGINA - ESTILO FUTURISTA NEÓN
+   ============================================ */
+
+/* 
+   Transiciones futuristas con efectos de glitch, 
+   escaneo holográfico y desvanecimiento neón
+   Duración: 500ms
+*/
+
+/* Animación de entrada: Glitch futurista con glow */
+@keyframes cyberSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) skewX(-2deg);
+    filter: blur(8px) brightness(2);
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  }
+  30% {
+    opacity: 0.5;
+    clip-path: polygon(0 0, 60% 0, 60% 100%, 0 100%);
+    filter: blur(2px) brightness(1.5);
+  }
+  60% {
+    transform: translateX(5px) skewX(0deg);
+    clip-path: polygon(0 0, 90% 0, 90% 100%, 0 100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+    filter: blur(0) brightness(1);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+/* Animación de salida: Desintegración digital */
+@keyframes cyberSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) skewX(0deg);
+    filter: blur(0) brightness(1);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  40% {
+    opacity: 0.7;
+    transform: translateX(-10px) skewX(1deg);
+    clip-path: polygon(0 0, 80% 0, 80% 100%, 0 100%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50px) skewX(-3deg);
+    filter: blur(10px) brightness(0.5);
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+  }
+}
+
+/* Animación alternativa: Flash holográfico */
+@keyframes holoFlashIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+    filter: hue-rotate(90deg) saturate(3) blur(5px);
+  }
+  50% {
+    opacity: 0.8;
+    filter: hue-rotate(45deg) saturate(2) blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: hue-rotate(0deg) saturate(1) blur(0);
+  }
+}
+
+@keyframes holoFlashOut {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: hue-rotate(0deg) saturate(1) blur(0);
+  }
+  50% {
+    opacity: 0.6;
+    filter: hue-rotate(-45deg) saturate(2) blur(2px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05) translateY(-20px);
+    filter: hue-rotate(-90deg) saturate(3) blur(5px);
+  }
+}
+
+/* Efecto de línea de escaneo durante transición */
+@keyframes scanTransition {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Configuración View Transitions API */
+
+/* Página saliente - Desintegración rápida */
+::view-transition-old(root) {
+  animation: cyberSlideOut 300ms ease-in-out forwards;
+  mix-blend-mode: normal;
+  z-index: 1;
+}
+
+/* Página entrante - Materialización rápida */
+::view-transition-new(root) {
+  animation: cyberSlideIn 400ms ease-out forwards;
+  mix-blend-mode: normal;
+  z-index: 2;
+}
+
+/* Overlay de transición con efecto de escaneo */
+::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+
+/* Sidebar y header persisten (no se animan) */
+::view-transition-old(sidebar),
+::view-transition-new(sidebar),
+::view-transition-old(header),
+::view-transition-new(header) {
+  animation: none;
+}
+
+/* Efecto de flash neón durante la transición */
+@keyframes neonFlash {
+  0%, 100% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(0, 255, 242, 0.5),
+      0 0 60px rgba(0, 255, 242, 0.3),
+      inset 0 0 30px rgba(0, 255, 242, 0.1);
+  }
+}
+
+/* ============================================
+   EFECTOS ADICIONALES FUTURISTAS
+   ============================================ */
+
+/* Efecto de línea de escaneo (opcional, añadir clase .scan-effect) */
+@keyframes scanLine {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.scan-effect::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00fff2, transparent);
+  box-shadow: 0 0 20px #00fff2, 0 0 40px #00fff2;
+  animation: scanLine 3s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Efecto de pulso en bordes (para elementos interactivos) */
+@keyframes borderPulse {
+  0%, 100% {
+    border-color: rgba(0, 255, 242, 0.3);
+    box-shadow: 0 0 10px rgba(0, 255, 242, 0.2);
+  }
+  50% {
+    border-color: rgba(0, 255, 242, 0.6);
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.4);
+  }
+}
+
+/* Clase para aplicar pulso neón */
+.neon-pulse {
+  animation: borderPulse 2s ease-in-out infinite;
+}
+
+/* Efecto de texto con glow */
+.neon-text {
+  color: #00fff2;
+  text-shadow: 
+    0 0 5px #00fff2,
+    0 0 10px #00fff2,
+    0 0 20px #00fff2,
+    0 0 40px #00fff2;
+}
+
+/* Efecto de texto gradiente neón */
+.neon-gradient-text {
+  background: linear-gradient(90deg, #00fff2, #ff00ff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  background-size: 200% auto;
+  animation: textGradient 3s linear infinite;
+}
+
+@keyframes textGradient {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Reducción de movimiento para accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+  
+  .scan-effect::after,
+  .neon-pulse,
+  .neon-gradient-text {
+    animation: none !important;
+  }
+}

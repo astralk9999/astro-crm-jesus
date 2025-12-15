@@ -1,0 +1,390 @@
+/* ============================================
+   HISTORIAL - ESTILO FUTURISTA NEÓN / GLASS
+   ============================================ */
+
+:root {
+  --historial-bg: rgba(18, 18, 28, 0.75);
+  --historial-card: rgba(255, 255, 255, 0.06);
+  --historial-border: rgba(0, 255, 242, 0.18);
+  --historial-acento: rgba(0, 255, 242, 0.75);
+  --historial-magenta: rgba(255, 0, 255, 0.65);
+  --historial-verde: rgba(0, 255, 136, 0.65);
+  --historial-rojo: rgba(255, 77, 109, 0.75);
+  --historial-texto: rgba(255, 255, 255, 0.92);
+  --historial-subtexto: rgba(255, 255, 255, 0.65);
+}
+
+@keyframes historialEntrada {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes brilloBorde {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(0, 255, 242, 0);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 242, 0.22);
+  }
+}
+
+.historial-contenedor {
+  padding: 1.5rem;
+  color: var(--historial-texto);
+  animation: historialEntrada 420ms ease-out both;
+}
+
+.historial-hero {
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.14), rgba(255, 0, 255, 0.10));
+  border: 1px solid var(--historial-border);
+  border-radius: 18px;
+  padding: 1.25rem 1.25rem;
+  backdrop-filter: blur(14px);
+  position: relative;
+  overflow: hidden;
+}
+
+.historial-hero::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle at 20% 30%, rgba(0, 255, 242, 0.25), transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.18), transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(0, 255, 136, 0.14), transparent 55%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.historial-hero-cabecera {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.historial-titulo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.historial-subtitulo {
+  margin-top: 0.25rem;
+  color: var(--historial-subtexto);
+}
+
+.historial-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.historial-stat {
+  background: var(--historial-card);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+}
+
+.historial-stat strong {
+  display: block;
+  font-size: 1.05rem;
+}
+
+.historial-stat span {
+  color: var(--historial-subtexto);
+  font-size: 0.85rem;
+}
+
+.historial-barra {
+  margin-top: 1rem;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.historial-filtro--min-170 {
+  min-width: 170px;
+}
+
+.historial-filtro--min-190 {
+  min-width: 190px;
+}
+
+.historial-filtro--min-220 {
+  min-width: 220px;
+}
+
+.historial-filtro--flex-1 {
+  flex: 1;
+}
+
+.historial-filtro {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem;
+  color: var(--historial-texto);
+}
+
+.historial-filtro label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--historial-subtexto);
+  margin-bottom: 0.25rem;
+}
+
+.historial-filtro select,
+.historial-filtro input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--historial-texto);
+}
+
+.historial-filtro input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.historial-lista {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.historial-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 16px;
+  padding: 1rem;
+  backdrop-filter: blur(12px);
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.historial-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 255, 242, 0.28);
+}
+
+.historial-item.encendido {
+  animation: brilloBorde 2.4s ease-in-out infinite;
+}
+
+.historial-item-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.historial-item-izq {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.historial-icono {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.18), rgba(255, 0, 255, 0.12));
+  border: 1px solid rgba(0, 255, 242, 0.20);
+}
+
+.historial-textos {
+  min-width: 0;
+}
+
+.historial-item-titulo {
+  font-weight: 750;
+  font-size: 1.02rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.historial-item-meta {
+  margin-top: 0.15rem;
+  color: var(--historial-subtexto);
+  font-size: 0.85rem;
+}
+
+.historial-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.historial-badge {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.historial-badge.creado {
+  border-color: rgba(0, 255, 136, 0.35);
+  color: rgba(0, 255, 136, 0.95);
+}
+
+.historial-badge.editado {
+  border-color: rgba(0, 255, 242, 0.35);
+  color: rgba(0, 255, 242, 0.95);
+}
+
+.historial-badge.eliminado {
+  border-color: rgba(255, 77, 109, 0.40);
+  color: rgba(255, 77, 109, 0.95);
+}
+
+.historial-badge.revertido {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.80);
+}
+
+.historial-acciones {
+  margin-top: 0.85rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.historial-btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 0.6rem 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.historial-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 255, 242, 0.35);
+}
+
+.historial-btn.primario {
+  background: linear-gradient(135deg, rgba(0, 255, 242, 0.25), rgba(255, 0, 255, 0.12));
+  border-color: rgba(0, 255, 242, 0.35);
+}
+
+.historial-btn.peligro {
+  border-color: rgba(255, 77, 109, 0.45);
+}
+
+.historial-detalle {
+  margin-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  padding-top: 0.85rem;
+  display: none;
+}
+
+.historial-detalle.abierto {
+  display: block;
+}
+
+.historial-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.historial-detalle-panel {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 0.75rem;
+}
+
+.historial-detalle-panel h4 {
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.historial-json {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.historial-error-reversion {
+  margin-top: 0.6rem;
+}
+
+/* Modal */
+.historial-modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 9999;
+}
+
+.historial-modal-fondo.abierto {
+  display: flex;
+}
+
+.historial-modal {
+  width: min(620px, 100%);
+  background: rgba(18, 18, 28, 0.92);
+  border: 1px solid rgba(0, 255, 242, 0.22);
+  border-radius: 18px;
+  padding: 1rem;
+  backdrop-filter: blur(16px);
+}
+
+.historial-modal h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.historial-modal p {
+  margin-top: 0.4rem;
+  color: var(--historial-subtexto);
+}
+
+.historial-modal-acciones {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+@media (max-width: 720px) {
+  .historial-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .historial-detalle-grid {
+    grid-template-columns: 1fr;
+  }
+}

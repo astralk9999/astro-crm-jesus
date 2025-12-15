@@ -1,0 +1,495 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAuthenticated, getUserProfile } from '../../lib/services/authService';
+import { getProducts } from '../../lib/services/productsService';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+if (!authenticated) {
+  return Astro.redirect('/login');
+}
+
+// Obtener perfil del usuario
+const userProfile = await getUserProfile(token);
+
+// Obtener lista de productos
+const productsResponse = await getProducts(token);
+const products = productsResponse.success ? productsResponse.data : [];
+---
+
+<Layout title="Gestión de Productos - SoftControl CRM">
+  <div class="page-container">
+    <!-- Encabezado de página -->
+    <header class="page-header animate-in">
+      <div class="header-info">
+        <div class="header-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <div>
+          <h1>Productos</h1>
+          <p>Gestiona el catálogo de productos y servicios</p>
+        </div>
+      </div>
+      {userProfile?.role === 'admin' && (
+        <a href="/productos/nuevo" class="btn-primary">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Nuevo Producto
+        </a>
+      )}
+    </header>
+
+    <!-- Barra de búsqueda mejorada -->
+    <div class="search-section animate-in animate-delay-1">
+      <div class="search-wrapper">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Buscar productos por nombre o descripción..."
+          class="search-input"
+        />
+      </div>
+      <div class="search-stats">
+        <span class="stats-badge">{products?.length || 0} productos</span>
+      </div>
+    </div>
+
+    <!-- Grid de productos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in animate-delay-2" id="productsGrid">
+      {products && products.length > 0 ? (
+        products.map((product) => (
+          <div class="product-card bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200">
+            <div class="p-6">
+              <h3 class="product-name text-lg font-semibold text-gray-900 mb-2">
+                {product.name}
+              </h3>
+              <p class="product-description text-gray-600 text-sm mb-4 line-clamp-2">
+                {product.description || 'Sin descripción'}
+              </p>
+              
+              <div class="space-y-2 mb-4">
+                {product.price_one_payment && (
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Pago único:</span>
+                    <span class="text-lg font-bold text-green-600">
+                      ${product.price_one_payment.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+                {product.price_subscription && (
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Suscripción:</span>
+                    <span class="text-lg font-bold text-blue-600">
+                      ${product.price_subscription.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      <span class="text-xs text-gray-500">/mes</span>
+                    </span>
+                  </div>
+                )}
+                {!product.price_one_payment && !product.price_subscription && (
+                  <div class="text-center text-gray-500 text-sm py-2">
+                    Precios no definidos
+                  </div>
+                )}
+              </div>
+
+              <div class="flex justify-between items-center pt-4 border-t">
+                <a href={`/productos/${product.id}`} class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                  Ver detalles
+                </a>
+                {userProfile?.role === 'admin' && (
+                  <div class="flex gap-2">
+                    <a href={`/productos/${product.id}/editar`} class="text-gray-600 hover:text-gray-800">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                      </svg>
+                    </a>
+                    <button 
+                      data-product-id={product.id}
+                      data-product-name={product.name}
+                      class="delete-product text-red-600 hover:text-red-800"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div class="col-span-full text-center py-12">
+          <p class="text-gray-500">No hay productos registrados</p>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Confirmar eliminación</h3>
+        <div class="mt-2 px-7 py-3">
+          <p class="text-sm text-gray-500">
+            ¿Estás seguro de que deseas eliminar el producto <span id="productNameToDelete" class="font-semibold"></span>? 
+            Esta acción no se puede deshacer.
+          </p>
+        </div>
+        <div class="items-center px-4 py-3">
+          <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+            Eliminar
+          </button>
+          <button id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div id="errorMessage" class="hidden fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50" role="alert">
+    <span class="block sm:inline" id="errorText">Error</span>
+  </div>
+
+  <script>
+    import { deleteProduct } from '../../lib/services/productsService';
+
+    // Búsqueda local de productos (filtrado en el DOM)
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const productCards = document.querySelectorAll('.product-card');
+
+    searchInput?.addEventListener('input', (e) => {
+      const searchTerm = (e.target as HTMLInputElement).value.toLowerCase().trim();
+
+      let visibleCount = 0;
+      productCards.forEach(card => {
+        const cardElement = card as HTMLElement;
+        const productName = cardElement.querySelector('.product-name')?.textContent?.toLowerCase() || '';
+        const productDesc = cardElement.querySelector('.product-description')?.textContent?.toLowerCase() || '';
+
+        if (searchTerm === '' || 
+            productName.includes(searchTerm) || 
+            productDesc.includes(searchTerm)) {
+          cardElement.style.display = '';
+          visibleCount++;
+        } else {
+          cardElement.style.display = 'none';
+        }
+      });
+    });
+
+    // Manejo del modal de eliminación
+    const deleteModal = document.getElementById('deleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    const productNameSpan = document.getElementById('productNameToDelete');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    let productToDelete = null;
+
+    function addDeleteEventListeners() {
+      document.querySelectorAll('.delete-product').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.currentTarget;
+          productToDelete = target.dataset.productId || null;
+          const productName = target.dataset.productName || '';
+          
+          if (productNameSpan) {
+            productNameSpan.textContent = productName;
+          }
+          
+          deleteModal?.classList.remove('hidden');
+        });
+      });
+    }
+
+    addDeleteEventListeners();
+
+    cancelDeleteBtn?.addEventListener('click', () => {
+      deleteModal?.classList.add('hidden');
+      productToDelete = null;
+    });
+
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      if (productToDelete) {
+        const response = await deleteProduct(productToDelete);
+        if (response.success) {
+          window.location.reload();
+        } else {
+          deleteModal?.classList.add('hidden');
+          if (errorText) {
+            errorText.textContent = response.error || 'Error al eliminar el producto';
+          }
+          errorMessage?.classList.remove('hidden');
+          setTimeout(() => {
+            errorMessage?.classList.add('hidden');
+          }, 5000);
+        }
+      }
+      productToDelete = null;
+    });
+
+    deleteModal?.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        deleteModal.classList.add('hidden');
+        productToDelete = null;
+      }
+    });
+  </script>
+</Layout>
+
+<style>
+  /* ============================================
+     PRODUCTOS - ESTILO FUTURISTA NEÓN
+     ============================================ */
+  
+  /* Contenedor principal */
+  .page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Encabezado de página */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .header-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  }
+
+  .header-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .header-info h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .header-info p {
+    font-size: 0.9375rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0;
+  }
+
+  /* Sección de búsqueda */
+  .search-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 500px;
+  }
+
+  .search-wrapper .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #00fff2;
+    opacity: 0.5;
+    pointer-events: none;
+    transition: all 0.3s;
+  }
+
+  .search-wrapper .search-input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 255, 242, 0.2);
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    color: white;
+    transition: all 0.3s;
+  }
+
+  .search-wrapper .search-input:focus {
+    outline: none;
+    border-color: #00fff2;
+    background: rgba(0, 255, 242, 0.05);
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.2);
+  }
+
+  .search-wrapper .search-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .stats-badge {
+    display: inline-flex;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #00ff88;
+  }
+
+  /* Sobrescribir colores grises de Tailwind */
+  .text-gray-900, h1, h3 {
+    color: #ffffff !important;
+  }
+  
+  .text-gray-600, .text-gray-500, p {
+    color: #e2e8f0 !important;
+  }
+  
+  .text-gray-400 {
+    color: #94a3b8 !important;
+  }
+  
+  /* Títulos con glow */
+  h1 {
+    text-shadow: 0 0 30px rgba(0, 255, 242, 0.2);
+  }
+  
+  /* Fondo de las cards - Glassmorphism */
+  .product-card {
+    background: rgba(10, 15, 25, 0.8) !important;
+    border: 1px solid rgba(0, 255, 242, 0.15) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+  }
+  
+  .product-card:hover {
+    border-color: rgba(0, 255, 242, 0.3) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 242, 0.1) !important;
+  }
+  
+  /* Precios con colores neón */
+  .text-green-600 {
+    color: #00ff88 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  }
+  
+  .text-blue-600 {
+    color: #00fff2 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+  }
+  
+  .text-blue-600:hover, .text-blue-800 {
+    color: #00fff2 !important;
+    text-shadow: 0 0 15px rgba(0, 255, 242, 0.5);
+  }
+  
+  /* Bordes */
+  .border-t, .border {
+    border-color: rgba(0, 255, 242, 0.15) !important;
+  }
+  
+  /* Botones de acción */
+  .text-gray-600:hover, .text-gray-800 {
+    color: #00fff2 !important;
+  }
+  
+  .text-red-600 {
+    color: #ff2d95 !important;
+  }
+  
+  .text-red-600:hover, .text-red-800 {
+    color: #ff2d95 !important;
+    filter: drop-shadow(0 0 8px rgba(255, 45, 149, 0.5));
+  }
+  
+  /* Modal futurista */
+  .bg-gray-600 {
+    background: rgba(5, 5, 8, 0.9) !important;
+  }
+  
+  #deleteModal > div {
+    background: rgba(10, 15, 25, 0.95) !important;
+    border: 1px solid rgba(255, 45, 149, 0.3) !important;
+    box-shadow: 0 0 40px rgba(255, 45, 149, 0.2) !important;
+  }
+  
+  .bg-red-100 {
+    background: rgba(255, 45, 149, 0.15) !important;
+  }
+  
+  .text-red-700 {
+    color: #ff2d95 !important;
+  }
+  
+  #confirmDelete {
+    background: linear-gradient(135deg, rgba(255, 45, 149, 0.3), rgba(255, 0, 100, 0.3)) !important;
+    border: 1px solid #ff2d95 !important;
+    color: #ff2d95 !important;
+    box-shadow: 0 0 15px rgba(255, 45, 149, 0.3);
+  }
+  
+  #confirmDelete:hover {
+    box-shadow: 0 0 25px rgba(255, 45, 149, 0.5);
+  }
+  
+  #cancelDelete {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #e2e8f0 !important;
+  }
+  
+  #cancelDelete:hover {
+    border-color: rgba(0, 255, 242, 0.3) !important;
+    color: #00fff2 !important;
+  }
+  
+  /* Mensaje de error */
+  #errorMessage {
+    background: rgba(255, 45, 149, 0.15) !important;
+    border: 1px solid rgba(255, 45, 149, 0.4) !important;
+    color: #ff2d95 !important;
+  }
+  
+  /* Estado vacío */
+  .col-span-full p {
+    color: #94a3b8 !important;
+  }
+</style>

@@ -1,8 +1,13 @@
 ---
-import VictoriaCRMWelcome from '../components/VictoriaCRMWelcome.astro';
-import Layout from '../layouts/Layout.astro';
----
+import { isAuthenticated } from '../lib/services/authService';
 
-<Layout>
-	<VictoriaCRMWelcome title="Victoria CRM" />
-</Layout>
+// Si está autenticado, redirigir al dashboard
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+if (authenticated) {
+  return Astro.redirect('/dashboard');
+}
+
+// Si no está autenticado, redirigir al login
+return Astro.redirect('/login');
+---

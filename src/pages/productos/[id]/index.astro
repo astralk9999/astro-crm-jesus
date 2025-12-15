@@ -1,0 +1,672 @@
+---
+// Página de detalle de producto - SoftControl CRM
+import Layout from '../../../layouts/Layout.astro';
+import { isAuthenticated, getUserProfile } from '../../../lib/services/authService';
+import { getProductById } from '../../../lib/services/productsService';
+import { getLicenses } from '../../../lib/services/licensesService';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+if (!authenticated) {
+  return Astro.redirect('/login');
+}
+
+const userProfile = await getUserProfile(token);
+
+// Obtener el ID del producto de los parámetros
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/productos');
+}
+
+// Obtener información del producto
+const productResponse = await getProductById(id, token);
+if (!productResponse.success || !productResponse.data) {
+  return Astro.redirect('/productos');
+}
+
+const product = productResponse.data;
+
+// Obtener licencias que usan este producto
+const licensesResponse = await getLicenses(token);
+const allLicenses = licensesResponse.success && licensesResponse.data ? licensesResponse.data : [];
+const productLicenses = allLicenses.filter((l: any) => l.product_id === id);
+---
+
+<Layout title={`${product.name} - SoftControl CRM`}>
+  <div class="page-container">
+    <!-- Encabezado -->
+    <header class="page-header animate-in">
+      <div class="header-info">
+        <div class="breadcrumb">
+          <a href="/productos">Productos</a>
+          <span>/</span>
+          <span>{product.name}</span>
+        </div>
+        <div class="header-title">
+          <div class="header-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div>
+            <h1>{product.name}</h1>
+            <p>Información detallada del producto</p>
+          </div>
+        </div>
+      </div>
+      
+      {userProfile?.role === 'admin' && (
+        <div class="header-actions">
+          <a href={`/productos/${id}/editar`} class="btn-primary">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Editar
+          </a>
+          <button id="deleteBtn" data-product-id={id} data-product-name={product.name} class="btn-danger">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            Eliminar
+          </button>
+        </div>
+      )}
+    </header>
+
+    <div class="content-grid animate-in animate-delay-1">
+      <!-- Información del Producto -->
+      <div class="main-content">
+        <div class="info-card">
+          <h2>Información General</h2>
+          
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Nombre del Producto</label>
+              <p>{product.name}</p>
+            </div>
+            
+            <div class="info-item full-width">
+              <label>Descripción</label>
+              <p>{product.description || 'Sin descripción'}</p>
+            </div>
+            
+            <div class="info-item">
+              <label>Fecha de Registro</label>
+              <p>{new Date(product.created_at).toLocaleDateString('es-ES', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Precios -->
+        <div class="prices-card">
+          <h2>Precios</h2>
+          
+          <div class="prices-grid">
+            <div class="price-item">
+              <div class="price-icon single">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="price-info">
+                <span class="price-label">Pago Único</span>
+                <span class="price-value single">
+                  {product.price_one_payment 
+                    ? `$${product.price_one_payment.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` 
+                    : 'No disponible'}
+                </span>
+              </div>
+            </div>
+            
+            <div class="price-item">
+              <div class="price-icon subscription">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
+              <div class="price-info">
+                <span class="price-label">Suscripción Mensual</span>
+                <span class="price-value subscription">
+                  {product.price_subscription 
+                    ? `$${product.price_subscription.toLocaleString('es-MX', { minimumFractionDigits: 2 })}/mes` 
+                    : 'No disponible'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel lateral - Licencias -->
+      <div class="side-panel">
+        <div class="licenses-card">
+          <div class="card-header">
+            <h2>Licencias Asociadas</h2>
+            <span class="badge">{productLicenses.length}</span>
+          </div>
+          
+          {productLicenses.length > 0 ? (
+            <div class="licenses-list">
+              {productLicenses.map((license: any) => (
+                <a href={`/licencias/${license.id}`} class="license-item">
+                  <div class="license-info">
+                    <span class="client-name">{license.client?.name || 'Cliente'}</span>
+                    <span class="license-type">{license.type === 'licencia_unica' ? 'Licencia Única' : 'Suscripción'}</span>
+                  </div>
+                  <span class={`status-badge ${license.status}`}>
+                    {license.status === 'activa' ? 'Activa' : 
+                     license.status === 'inactiva' ? 'Inactiva' : 'Pendiente'}
+                  </span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="empty-state">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <p>No hay licencias para este producto</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+      </div>
+      <h3>Confirmar eliminación</h3>
+      <p>¿Estás seguro de que deseas eliminar el producto <strong id="productNameModal"></strong>?</p>
+      <p class="warning">Esta acción no se puede deshacer y eliminará todas las licencias asociadas.</p>
+      <div class="modal-actions">
+        <button id="cancelDelete" class="btn-secondary">Cancelar</button>
+        <button id="confirmDelete" class="btn-danger">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { deleteProduct } from '../../../lib/services/productsService';
+
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deleteModal = document.getElementById('deleteModal');
+    const productNameModal = document.getElementById('productNameModal');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    
+    let productToDelete: string | null = null;
+
+    deleteBtn?.addEventListener('click', () => {
+      productToDelete = deleteBtn.dataset.productId || null;
+      const productName = deleteBtn.dataset.productName || '';
+      if (productNameModal) productNameModal.textContent = productName;
+      deleteModal?.classList.remove('hidden');
+    });
+
+    cancelDeleteBtn?.addEventListener('click', () => {
+      deleteModal?.classList.add('hidden');
+      productToDelete = null;
+    });
+
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      if (productToDelete) {
+        const response = await deleteProduct(productToDelete);
+        if (response.success) {
+          window.location.href = '/productos';
+        } else {
+          alert('Error al eliminar el producto: ' + response.error);
+        }
+      }
+    });
+
+    deleteModal?.querySelector('.modal-backdrop')?.addEventListener('click', () => {
+      deleteModal?.classList.add('hidden');
+      productToDelete = null;
+    });
+  </script>
+</Layout>
+
+<style>
+  /* ============================================
+     DETALLE DE PRODUCTO - ESTILO FUTURISTA NEÓN
+     ============================================ */
+  
+  .page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Encabezado */
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+  }
+
+  .breadcrumb a {
+    color: #00fff2;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .breadcrumb a:hover {
+    color: #00b4ff;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+  }
+
+  .header-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .header-title h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+  }
+
+  .header-title p {
+    font-size: 0.9375rem;
+    color: #94a3b8;
+    margin: 0.25rem 0 0;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  /* Grid de contenido */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1024px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Tarjetas de información */
+  .info-card, .prices-card, .licenses-card {
+    background: rgba(10, 15, 25, 0.8);
+    border: 1px solid rgba(0, 255, 242, 0.15);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .info-card h2, .prices-card h2, .licenses-card h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #00fff2;
+    margin: 0 0 1.25rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .info-item.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .info-item label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .info-item p {
+    font-size: 0.9375rem;
+    color: white;
+    margin: 0;
+  }
+
+  /* Precios */
+  .prices-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .price-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .price-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .price-icon.single {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+  }
+
+  .price-icon.subscription {
+    background: rgba(0, 180, 255, 0.15);
+    color: #00b4ff;
+  }
+
+  .price-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .price-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .price-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .price-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .price-value.single {
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  }
+
+  .price-value.subscription {
+    color: #00b4ff;
+    text-shadow: 0 0 10px rgba(0, 180, 255, 0.3);
+  }
+
+  /* Panel de licencias */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .card-header h2 {
+    margin: 0;
+  }
+
+  .badge {
+    background: rgba(191, 0, 255, 0.2);
+    color: #bf00ff;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .licenses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .license-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .license-item:hover {
+    background: rgba(0, 255, 242, 0.05);
+    border-color: rgba(0, 255, 242, 0.2);
+  }
+
+  .license-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .client-name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: white;
+  }
+
+  .license-type {
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
+
+  .status-badge.activa {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+  }
+
+  .status-badge.inactiva {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+  }
+
+  .status-badge.pendiente_pago {
+    background: rgba(255, 255, 0, 0.15);
+    color: #ffff00;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #64748b;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    opacity: 0.4;
+  }
+
+  .empty-state p {
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal.hidden {
+    display: none;
+  }
+
+  .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  .modal-content {
+    position: relative;
+    background: rgba(10, 15, 25, 0.95);
+    border: 1px solid rgba(255, 45, 149, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 45, 149, 0.2);
+  }
+
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    background: rgba(255, 45, 149, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff2d95;
+  }
+
+  .modal-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .modal-content h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin: 0 0 0.5rem;
+  }
+
+  .modal-content p {
+    font-size: 0.9375rem;
+    color: #94a3b8;
+    margin: 0 0 0.5rem;
+  }
+
+  .modal-content .warning {
+    font-size: 0.8125rem;
+    color: #ff2d95;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  /* Botones */
+  .btn-primary, .btn-secondary, .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(0, 180, 255, 0.2));
+    border: 1px solid #00fff2;
+    color: #00fff2;
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.3);
+  }
+
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e2e8f0;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(0, 255, 242, 0.3);
+    color: #00fff2;
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, rgba(255, 45, 149, 0.2), rgba(255, 0, 100, 0.2));
+    border: 1px solid #ff2d95;
+    color: #ff2d95;
+  }
+
+  .btn-danger:hover {
+    box-shadow: 0 0 20px rgba(255, 45, 149, 0.3);
+  }
+</style>

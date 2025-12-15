@@ -1,0 +1,506 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { isAuthenticated, getUserProfile } from '../../../lib/services/authService';
+import { getClientById } from '../../../lib/services/clientsService';
+import { getLicensesByClient } from '../../../lib/services/licensesService';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+if (!authenticated) {
+  return Astro.redirect('/login');
+}
+
+const userProfile = await getUserProfile(token);
+
+// Obtener el ID del cliente de los parámetros
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/clientes');
+}
+
+// Obtener información del cliente
+const clientResponse = await getClientById(id, token);
+if (!clientResponse.success || !clientResponse.data) {
+  return Astro.redirect('/clientes');
+}
+
+const client = clientResponse.data;
+
+// Obtener licencias del cliente
+const licensesResponse = await getLicensesByClient(id);
+const licenses = licensesResponse.success && licensesResponse.data ? licensesResponse.data : [];
+---
+
+<Layout title={`${client.name} - SoftControl CRM`}>
+  <div class="container mx-auto px-4 py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
+        <a href="/clientes" class="hover:text-blue-600">Clientes</a>
+        <span>/</span>
+        <span>{client.name}</span>
+      </div>
+      
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">{client.name}</h1>
+          <p class="text-gray-600 mt-2">Información detallada del cliente</p>
+        </div>
+        
+        {userProfile?.role === 'admin' && (
+          <div class="flex gap-2">
+            <a href={`/clientes/${id}/editar`} class="btn-primary">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Editar
+            </a>
+            <button id="deleteBtn" data-client-id={id} data-client-name={client.name} class="btn-danger">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Eliminar
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Información del Cliente -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h2 class="text-xl font-semibold mb-4">Información de Contacto</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-gray-500">Nombre</label>
+              <p class="text-gray-900 mt-1">{client.name}</p>
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium text-gray-500">Email</label>
+              <p class="text-gray-900 mt-1">
+                <a href={`mailto:${client.email}`} class="text-blue-600 hover:underline">
+                  {client.email}
+                </a>
+              </p>
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium text-gray-500">Teléfono</label>
+              <p class="text-gray-900 mt-1">
+                {client.phone ? (
+                  <a href={`tel:${client.phone}`} class="text-blue-600 hover:underline">
+                    {client.phone}
+                  </a>
+                ) : (
+                  <span class="text-gray-400">No especificado</span>
+                )}
+              </p>
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium text-gray-500">Empresa</label>
+              <p class="text-gray-900 mt-1">
+                {client.company || <span class="text-gray-400">No especificada</span>}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Licencias del Cliente -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Licencias</h2>
+            {userProfile?.role === 'admin' && (
+              <a href={`/licencias/nueva?cliente=${id}`} class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                + Asignar Licencia
+              </a>
+            )}
+          </div>
+          
+          {licenses.length > 0 ? (
+            <div class="licenses-list">
+              {licenses.map((license: any) => (
+                <a href={`/licencias/${license.id}`} class="license-item">
+                  <div class="license-main">
+                    <span class="license-product">{license.product?.name || 'Producto'}</span>
+                    <span class="license-type-badge">
+                      {license.type === 'licencia_unica' ? 'Licencia Única' : 'Suscripción'}
+                    </span>
+                  </div>
+                  <div class="license-details">
+                    <span class="license-date">
+                      Inicio: {new Date(license.start_date).toLocaleDateString('es-ES')}
+                      {license.end_date && ` - Fin: ${new Date(license.end_date).toLocaleDateString('es-ES')}`}
+                    </span>
+                    <span class={`license-status ${license.status}`}>
+                      {license.status === 'activa' ? 'Activa' : 
+                       license.status === 'inactiva' ? 'Inactiva' : 'Pendiente Pago'}
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="empty-licenses">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+              <p>No hay licencias asignadas a este cliente</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <!-- Panel lateral -->
+      <div class="space-y-6">
+        <!-- Información del Sistema -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold mb-4">Información del Sistema</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="text-sm font-medium text-gray-500">ID del Cliente</label>
+              <p class="text-xs text-gray-600 font-mono mt-1">{client.id}</p>
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium text-gray-500">Fecha de Registro</label>
+              <p class="text-gray-900 mt-1">
+                {new Date(client.created_at).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+            
+            <div>
+              <label class="text-sm font-medium text-gray-500">Hora de Registro</label>
+              <p class="text-gray-900 mt-1">
+                {new Date(client.created_at).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+          <h3 class="text-lg font-semibold mb-4">Acciones Rápidas</h3>
+          
+          <div class="space-y-2">
+            <a href={`mailto:${client.email}`} class="flex items-center gap-2 text-gray-700 hover:text-blue-600 py-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              Enviar email
+            </a>
+            
+            {client.phone && (
+              <a href={`tel:${client.phone}`} class="flex items-center gap-2 text-gray-700 hover:text-blue-600 py-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                Llamar
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="mt-3 text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Confirmar eliminación</h3>
+        <div class="mt-2 px-7 py-3">
+          <p class="text-sm text-gray-500">
+            ¿Estás seguro de que deseas eliminar al cliente <span id="clientNameToDelete" class="font-semibold"></span>? 
+            Esta acción eliminará también todas sus licencias asociadas y no se puede deshacer.
+          </p>
+        </div>
+        <div class="items-center px-4 py-3">
+          <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+            Eliminar
+          </button>
+          <button id="cancelDelete" class="px-4 py-2 bg-gray-200 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import { deleteClient } from '../../../lib/services/clientsService';
+
+    // Manejo del modal de eliminación
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deleteModal = document.getElementById('deleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    const clientNameSpan = document.getElementById('clientNameToDelete');
+    
+    const clientId = deleteBtn?.dataset.clientId;
+    const clientName = deleteBtn?.dataset.clientName;
+
+    deleteBtn?.addEventListener('click', () => {
+      if (clientNameSpan) {
+        clientNameSpan.textContent = clientName || '';
+      }
+      deleteModal?.classList.remove('hidden');
+    });
+
+    cancelDeleteBtn?.addEventListener('click', () => {
+      deleteModal?.classList.add('hidden');
+    });
+
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      if (clientId) {
+        const response = await deleteClient(clientId);
+        if (response.success) {
+          window.location.href = '/clientes';
+        } else {
+          alert('Error al eliminar el cliente: ' + response.error);
+        }
+      }
+      deleteModal?.classList.add('hidden');
+    });
+
+    // Cerrar modal al hacer clic fuera
+    deleteModal?.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        deleteModal.classList.add('hidden');
+      }
+    });
+  </script>
+</Layout>
+
+<style>
+  /* ============================================
+     VER CLIENTE - ESTILO FUTURISTA NEÓN
+     ============================================ */
+  
+  /* Textos */
+  h1, h2, h3, .text-gray-900 {
+    color: #ffffff !important;
+  }
+  
+  h1 {
+    text-shadow: 0 0 30px rgba(0, 255, 242, 0.2);
+  }
+  
+  .text-gray-600, .text-gray-500, p {
+    color: #94a3b8 !important;
+  }
+  
+  .text-gray-700 {
+    color: #cbd5e1 !important;
+  }
+  
+  .text-gray-400 {
+    color: #64748b !important;
+  }
+  
+  /* Breadcrumb */
+  .text-sm.text-gray-600 a {
+    color: #00fff2 !important;
+    transition: all 0.3s;
+  }
+  
+  .text-sm.text-gray-600 a:hover {
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+  
+  /* Cards - Glassmorphism */
+  .bg-white {
+    background: rgba(10, 15, 25, 0.8) !important;
+    border: 1px solid rgba(0, 255, 242, 0.15) !important;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Labels */
+  label {
+    color: #00fff2 !important;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  /* Links */
+  .text-blue-600 {
+    color: #00fff2 !important;
+  }
+  
+  .text-blue-600:hover {
+    color: #00fff2 !important;
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+  
+  /* Acciones rápidas */
+  .space-y-2 a {
+    color: #cbd5e1 !important;
+    transition: all 0.3s;
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .space-y-2 a:hover {
+    color: #00fff2 !important;
+    background: rgba(0, 255, 242, 0.1);
+  }
+  
+  /* Modal futurista */
+  .bg-gray-600 {
+    background: rgba(5, 5, 8, 0.9) !important;
+  }
+  
+  #deleteModal > div {
+    background: rgba(10, 15, 25, 0.95) !important;
+    border: 1px solid rgba(255, 45, 149, 0.3) !important;
+    box-shadow: 0 0 40px rgba(255, 45, 149, 0.2) !important;
+  }
+  
+  .bg-red-100 {
+    background: rgba(255, 45, 149, 0.15) !important;
+  }
+  
+  .text-red-600 {
+    color: #ff2d95 !important;
+  }
+  
+  #confirmDelete {
+    background: linear-gradient(135deg, rgba(255, 45, 149, 0.3), rgba(255, 0, 100, 0.3)) !important;
+    border: 1px solid #ff2d95 !important;
+    color: #ff2d95 !important;
+  }
+  
+  #cancelDelete {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #e2e8f0 !important;
+  }
+  
+  #cancelDelete:hover {
+    border-color: rgba(0, 255, 242, 0.3) !important;
+    color: #00fff2 !important;
+  }
+  
+  /* ID del cliente */
+  .font-mono {
+    color: #bf00ff !important;
+    background: rgba(191, 0, 255, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  /* Licencias del cliente */
+  .licenses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .license-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .license-item:hover {
+    background: rgba(0, 255, 242, 0.05);
+    border-color: rgba(0, 255, 242, 0.2);
+  }
+
+  .license-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .license-product {
+    font-weight: 600;
+    color: white !important;
+    font-size: 0.9375rem;
+  }
+
+  .license-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    background: rgba(0, 180, 255, 0.15);
+    color: #00b4ff;
+  }
+
+  .license-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8125rem;
+  }
+
+  .license-date {
+    color: #64748b !important;
+  }
+
+  .license-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+  }
+
+  .license-status.activa {
+    background: rgba(0, 255, 136, 0.15);
+    color: #00ff88;
+  }
+
+  .license-status.inactiva {
+    background: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+  }
+
+  .license-status.pendiente_pago {
+    background: rgba(255, 255, 0, 0.15);
+    color: #ffff00;
+  }
+
+  .empty-licenses {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .empty-licenses svg {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    color: #64748b;
+    opacity: 0.4;
+  }
+
+  .empty-licenses p {
+    font-size: 0.875rem;
+    color: #64748b !important;
+    margin: 0;
+  }
+</style>

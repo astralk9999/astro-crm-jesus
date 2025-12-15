@@ -1,0 +1,270 @@
+/* Panel y página de notificaciones (estilo neón/glass) */
+
+:root {
+  --noti-bg: rgba(10, 10, 16, 0.78);
+  --noti-borde: rgba(0, 255, 242, 0.18);
+  --noti-borde-fuerte: rgba(0, 255, 242, 0.35);
+  --noti-sombra: 0 24px 60px rgba(0, 0, 0, 0.55);
+  --noti-texto: rgba(255, 255, 255, 0.92);
+  --noti-texto-suave: rgba(255, 255, 255, 0.62);
+}
+
+.noti-oculto {
+  display: none !important;
+}
+
+/* ============================================
+   PANEL (HEADER)
+   ============================================ */
+
+.noti-wrapper {
+  position: relative;
+}
+
+.panel-notificaciones {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  width: min(420px, calc(100vw - 24px));
+  background: linear-gradient(180deg, rgba(10, 12, 20, 0.92), rgba(10, 10, 16, 0.78));
+  border: 1px solid var(--noti-borde);
+  border-radius: 18px;
+  box-shadow: var(--noti-sombra);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  z-index: 999;
+}
+
+.panel-notificaciones.activo {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.panel-notificaciones::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: radial-gradient(circle at 20% 0%, rgba(0, 255, 242, 0.24), transparent 55%),
+    radial-gradient(circle at 90% 20%, rgba(255, 0, 255, 0.22), transparent 55%);
+  opacity: 0.9;
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.panel-notificaciones > * {
+  position: relative;
+  z-index: 1;
+}
+
+.panel-notificaciones-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 255, 242, 0.12);
+}
+
+.panel-notificaciones-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.panel-notificaciones-titulo h3 {
+  font-size: 0.95rem;
+  line-height: 1.1;
+  color: var(--noti-texto);
+  letter-spacing: 0.01em;
+}
+
+.panel-notificaciones-subtitulo {
+  font-size: 0.78rem;
+  color: var(--noti-texto-suave);
+}
+
+.panel-notificaciones-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.noti-btn-secundario {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.noti-btn-secundario:hover {
+  transform: translateY(-1px);
+  border-color: var(--noti-borde-fuerte);
+  background: rgba(0, 255, 242, 0.08);
+}
+
+.panel-notificaciones-lista {
+  max-height: 360px;
+  overflow: auto;
+}
+
+/* Scroll fino (sin depender de librerías) */
+.panel-notificaciones-lista::-webkit-scrollbar {
+  width: 10px;
+}
+.panel-notificaciones-lista::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 242, 0.12);
+  border-radius: 999px;
+  border: 2px solid rgba(10, 10, 16, 0.9);
+}
+
+.noti-item {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: background 140ms ease;
+}
+
+.noti-item:hover {
+  background: rgba(0, 255, 242, 0.06);
+}
+
+.noti-item.no-leida {
+  background: linear-gradient(90deg, rgba(0, 255, 242, 0.10), transparent 55%);
+}
+
+.noti-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(0, 255, 242, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 0 20px rgba(0, 255, 242, 0.08);
+}
+
+.noti-cuerpo {
+  min-width: 0;
+}
+
+.noti-cuerpo-titulo {
+  font-size: 0.9rem;
+  color: var(--noti-texto);
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noti-cuerpo-descripcion {
+  font-size: 0.82rem;
+  color: var(--noti-texto-suave);
+  margin-top: 2px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.noti-cuerpo-meta {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.panel-notificaciones-vacio {
+  padding: 18px 16px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+}
+
+.panel-notificaciones-pie {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid rgba(0, 255, 242, 0.10);
+}
+
+.panel-notificaciones-link {
+  color: rgba(0, 255, 242, 0.9);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: filter 160ms ease;
+}
+
+.panel-notificaciones-link:hover {
+  filter: drop-shadow(0 0 10px rgba(0, 255, 242, 0.45));
+}
+
+/* ============================================
+   PÁGINA /Notificaciones
+   ============================================ */
+
+.pagina-notificaciones {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+}
+
+.pagina-notificaciones-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.pagina-notificaciones-header h1 {
+  color: #fff;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 30px rgba(0, 255, 242, 0.18);
+}
+
+.pagina-notificaciones-header p {
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 6px;
+}
+
+.pagina-notificaciones-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pagina-notificaciones-panel {
+  border: 1px solid rgba(0, 255, 242, 0.14);
+  background: rgba(10, 15, 25, 0.72);
+  border-radius: 18px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.pagina-notificaciones-lista {
+  display: grid;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-notificaciones,
+  .noti-btn-secundario,
+  .noti-item {
+    transition: none;
+  }
+}

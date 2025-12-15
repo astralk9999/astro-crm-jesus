@@ -1,0 +1,111 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isAuthenticated, getCurrentUser, getUserProfile } from '../lib/services/authService';
+
+const token = Astro.cookies.get('sb-access-token')?.value;
+const autenticado = await isAuthenticated(token);
+
+if (!autenticado) {
+  return Astro.redirect('/login');
+}
+
+const usuario = await getCurrentUser(token);
+const perfil = await getUserProfile(token);
+
+function obtenerIniciales(nombreCompleto?: string | null): string {
+  const nombre = (nombreCompleto || 'Usuario').trim();
+  const partes = nombre.split(/\s+/).filter(Boolean);
+
+  const iniciales = partes
+    .slice(0, 2)
+    .map((p) => (p[0] ? p[0].toUpperCase() : ''))
+    .join('');
+
+  return iniciales || 'U';
+}
+
+const nombreVisible = (usuario?.user_metadata?.full_name || perfil?.full_name || 'Usuario') as string;
+const emailVisible = (usuario?.email || 'usuario@email.com') as string;
+const rolVisible = (perfil?.role || usuario?.user_metadata?.role || 'staff') as string;
+const idVisible = (perfil?.id || usuario?.id || '—') as string;
+const creadoEn = (perfil?.created_at || usuario?.created_at || '') as string;
+
+const iniciales = obtenerIniciales(nombreVisible);
+const rolLabel = rolVisible === 'admin' ? 'Administrador' : 'Staff';
+---
+
+<Layout title="Perfil - SoftControl CRM">
+  <link rel="stylesheet" href="/estilos/Perfil.css" />
+
+  <div class="perfil-contenedor">
+    <section class="perfil-hero" aria-label="Perfil de usuario">
+      <div class="perfil-hero-cabecera">
+        <div class="perfil-identidad">
+          <div class="perfil-avatar" aria-hidden="true">
+            <span>{iniciales}</span>
+          </div>
+
+          <div class="perfil-textos">
+            <div class="perfil-titulo">{nombreVisible}</div>
+            <div class="perfil-subtitulo">{emailVisible}</div>
+          </div>
+        </div>
+
+        <div class="perfil-badges" aria-label="Metadatos del usuario">
+          <div class="perfil-badge">
+            <span>Rol:</span>
+            <strong>{rolLabel}</strong>
+          </div>
+          <div class="perfil-badge">
+            <span>ID:</span>
+            <strong>{idVisible.slice(0, 8)}…</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="perfil-cuerpo">
+        <article class="perfil-tarjeta" aria-label="Datos principales">
+          <h2>Datos principales</h2>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Nombre</div>
+            <div class="perfil-valor">{nombreVisible}</div>
+          </div>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Correo</div>
+            <div class="perfil-valor">{emailVisible}</div>
+          </div>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Rol</div>
+            <div class="perfil-valor">{rolLabel}</div>
+          </div>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Creado</div>
+            <div class="perfil-valor">{creadoEn ? new Date(creadoEn).toLocaleString('es-ES') : '—'}</div>
+          </div>
+        </article>
+
+        <article class="perfil-tarjeta" aria-label="Acciones">
+          <h2>Acciones</h2>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Notificaciones</div>
+            <div class="perfil-valor">
+              <a href="/Notificaciones" class="perfil-enlace">Ver notificaciones</a>
+            </div>
+          </div>
+
+          <div class="perfil-linea">
+            <div class="perfil-etiqueta">Panel</div>
+            <div class="perfil-valor">
+              <a href="/dashboard" class="perfil-enlace">Volver al dashboard</a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</Layout>

@@ -1,0 +1,384 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isAuthenticated, isAdmin, getUserProfile } from '../lib/services/authService';
+import { obtenerHistorialCambios, revertirCambioHistorial } from '../servicios/HistorialService';
+
+export const prerender = false;
+
+const token = Astro.cookies.get('sb-access-token')?.value;
+const autenticado = await isAuthenticated(token);
+
+if (!autenticado) {
+  return Astro.redirect('/login');
+}
+
+const esAdmin = await isAdmin(token);
+if (!esAdmin) {
+  return Astro.redirect('/dashboard');
+}
+
+const perfil = await getUserProfile(token);
+const idActor = perfil?.id;
+
+if (!idActor) {
+  return Astro.redirect('/dashboard');
+}
+
+let mensajeEstado = '';
+let mensajeTipo = '';
+
+if (Astro.request.method === 'POST') {
+  const formData = await Astro.request.formData();
+  const idHistorial = String(formData.get('historial_id') || '').trim();
+
+  if (idHistorial) {
+    const resultado = await revertirCambioHistorial({ token, idHistorial });
+
+    if (resultado.success) {
+      return Astro.redirect('/Historial?revert=ok');
+    }
+
+    return Astro.redirect(`/Historial?revert=error&mensaje=${encodeURIComponent(resultado.error || 'Error al revertir')}`);
+  }
+
+  return Astro.redirect('/Historial?revert=error&mensaje=Falta%20historial_id');
+}
+
+const url = new URL(Astro.request.url);
+const revert = url.searchParams.get('revert');
+const mensaje = url.searchParams.get('mensaje');
+
+if (revert === 'ok') {
+  mensajeTipo = 'ok';
+  mensajeEstado = 'Cambio revertido correctamente.';
+} else if (revert === 'error') {
+  mensajeTipo = 'error';
+  mensajeEstado = mensaje ? decodeURIComponent(mensaje) : 'No se pudo revertir el cambio.';
+}
+
+const respuesta = await obtenerHistorialCambios({
+  token,
+  idActor,
+  limite: 250,
+  incluirRevertidos: true,
+});
+
+const historial = respuesta.success && respuesta.data ? respuesta.data : [];
+
+function etiquetaTabla(tabla: string): string {
+  if (tabla === 'clients') return 'Cliente';
+  if (tabla === 'products') return 'Producto';
+  if (tabla === 'licenses') return 'Licencia';
+  return 'Registro';
+}
+
+function etiquetaAccion(accion: string): string {
+  if (accion === 'insert') return 'Creado';
+  if (accion === 'update') return 'Editado';
+  if (accion === 'delete') return 'Eliminado';
+  return accion;
+}
+
+function claseAccion(accion: string): string {
+  if (accion === 'insert') return 'creado';
+  if (accion === 'update') return 'editado';
+  if (accion === 'delete') return 'eliminado';
+  return '';
+}
+
+function nombreRegistro(item: any): string {
+  const fuente = item.new_data || item.old_data || {};
+  const nombre = fuente.name || fuente.email || fuente.license_key || item.registro_id;
+  return String(nombre || item.registro_id);
+}
+
+function enlaceRegistro(item: any): string | null {
+  if (item.tabla === 'clients') return `/clientes/${item.registro_id}`;
+  if (item.tabla === 'products') return `/productos/${item.registro_id}`;
+  if (item.tabla === 'licenses') return `/licencias/${item.registro_id}`;
+  return null;
+}
+
+function formatearFecha(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString('es-ES');
+  } catch {
+    return iso;
+  }
+}
+
+const total = historial.length;
+const totalRevertidos = historial.filter((h) => h.revertido).length;
+const totalPendientes = total - totalRevertidos;
+---
+
+<Layout title="Historial - SoftControl CRM">
+  <link rel="stylesheet" href="/estilos/Historial.css" />
+
+  <div class="historial-contenedor">
+    <section class="historial-hero" aria-label="Historial de cambios">
+      <div class="historial-hero-cabecera">
+        <div>
+          <div class="historial-titulo">Historial</div>
+          <div class="historial-subtitulo">Registro de cambios realizados por tu sesión de administrador, con opción de revertir.</div>
+        </div>
+
+        <div class="historial-stats" aria-label="Estadísticas del historial">
+          <div class="historial-stat">
+            <strong>{total}</strong>
+            <span>eventos</span>
+          </div>
+          <div class="historial-stat">
+            <strong>{totalPendientes}</strong>
+            <span>pendientes</span>
+          </div>
+          <div class="historial-stat">
+            <strong>{totalRevertidos}</strong>
+            <span>revertidos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="historial-barra" aria-label="Filtros">
+        <div class="historial-filtro historial-filtro--min-170">
+          <label for="filtroTabla">Tipo</label>
+          <select id="filtroTabla">
+            <option value="todas">Todos</option>
+            <option value="clients">Clientes</option>
+            <option value="products">Productos</option>
+            <option value="licenses">Licencias</option>
+          </select>
+        </div>
+
+        <div class="historial-filtro historial-filtro--min-170">
+          <label for="filtroAccion">Acción</label>
+          <select id="filtroAccion">
+            <option value="todas">Todas</option>
+            <option value="insert">Creación</option>
+            <option value="update">Edición</option>
+            <option value="delete">Eliminación</option>
+          </select>
+        </div>
+
+        <div class="historial-filtro historial-filtro--flex-1 historial-filtro--min-220">
+          <label for="filtroTexto">Buscar</label>
+          <input id="filtroTexto" type="text" placeholder="Nombre, email, clave, ID…" />
+        </div>
+
+        <div class="historial-filtro historial-filtro--min-190">
+          <label for="filtroRevertidos">Estado</label>
+          <select id="filtroRevertidos">
+            <option value="todos">Todos</option>
+            <option value="pendientes">Solo pendientes</option>
+            <option value="revertidos">Solo revertidos</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    {mensajeEstado && (
+      <div class={`historial-item ${mensajeTipo === 'ok' ? 'encendido' : ''}`} role="status" aria-live="polite">
+        <div class="historial-item-titulo">{mensajeTipo === 'ok' ? 'Listo' : 'Atención'}</div>
+        <div class="historial-item-meta">{mensajeEstado}</div>
+      </div>
+    )}
+
+    <section class="historial-lista" id="historialLista" aria-label="Listado de cambios">
+      {historial.length === 0 ? (
+        <div class="historial-item">
+          <div class="historial-item-titulo">No hay movimientos todavía</div>
+          <div class="historial-item-meta">Cuando crees, edites o elimines clientes/productos/licencias, aparecerán aquí.</div>
+        </div>
+      ) : (
+        historial.map((item) => (
+          <article
+            class="historial-item"
+            data-tabla={item.tabla}
+            data-accion={item.accion}
+            data-revertido={item.revertido ? '1' : '0'}
+            data-texto={nombreRegistro(item).toLowerCase()}
+          >
+            <div class="historial-item-cabecera">
+              <div class="historial-item-izq">
+                <div class="historial-icono" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3"></path>
+                    <path d="M3.05 11a9 9 0 1 0 .5-3"></path>
+                    <path d="M3 4v4h4"></path>
+                  </svg>
+                </div>
+
+                <div class="historial-textos">
+                  <div class="historial-item-titulo">
+                    {etiquetaTabla(item.tabla)} · {etiquetaAccion(item.accion)} · {nombreRegistro(item)}
+                  </div>
+                  <div class="historial-item-meta">
+                    {formatearFecha(item.fecha)} · ID: {item.registro_id}
+                  </div>
+                </div>
+              </div>
+
+              <div class="historial-badges" aria-label="Etiquetas">
+                <span class={`historial-badge ${claseAccion(item.accion)}`}>{etiquetaAccion(item.accion)}</span>
+                <span class="historial-badge">{etiquetaTabla(item.tabla)}</span>
+                {item.revertido && <span class="historial-badge revertido">Revertido</span>}
+              </div>
+            </div>
+
+            <div class="historial-acciones">
+              <button type="button" class="historial-btn" data-accion="ver-detalle">Ver detalle</button>
+
+              {enlaceRegistro(item) && (
+                <a class="historial-btn" href={enlaceRegistro(item) as string}>Ir al registro</a>
+              )}
+
+              {!item.revertido && (
+                <button
+                  type="button"
+                  class="historial-btn primario"
+                  data-accion="revertir"
+                  data-historial-id={item.id}
+                  data-descripcion={`Revertir: ${etiquetaTabla(item.tabla)} · ${etiquetaAccion(item.accion)} · ${nombreRegistro(item)}`}
+                >
+                  Revertir
+                </button>
+              )}
+            </div>
+
+            <div class="historial-detalle" aria-hidden="true">
+              <div class="historial-detalle-grid">
+                <div class="historial-detalle-panel">
+                  <h4>Antes</h4>
+                  <pre class="historial-json">{JSON.stringify(item.old_data, null, 2)}</pre>
+                </div>
+                <div class="historial-detalle-panel">
+                  <h4>Después</h4>
+                  <pre class="historial-json">{JSON.stringify(item.new_data, null, 2)}</pre>
+                </div>
+              </div>
+
+              {item.error_reversion && (
+                <div class="historial-item-meta historial-error-reversion">Error de reversión: {item.error_reversion}</div>
+              )}
+            </div>
+          </article>
+        ))
+      )}
+    </section>
+
+    <div id="historialModalFondo" class="historial-modal-fondo" aria-hidden="true">
+      <div class="historial-modal" role="dialog" aria-modal="true" aria-labelledby="historialModalTitulo">
+        <h3 id="historialModalTitulo">Confirmar reversión</h3>
+        <p id="historialModalDescripcion">¿Seguro que quieres revertir este cambio?</p>
+
+        <form method="post" id="historialFormRevertir">
+          <input type="hidden" name="historial_id" id="historialInputId" value="" />
+          <div class="historial-modal-acciones">
+            <button type="button" class="historial-btn" id="historialCancelar">Cancelar</button>
+            <button type="submit" class="historial-btn primario">Sí, revertir</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const filtroTabla = document.getElementById('filtroTabla');
+      const filtroAccion = document.getElementById('filtroAccion');
+      const filtroTexto = document.getElementById('filtroTexto');
+      const filtroRevertidos = document.getElementById('filtroRevertidos');
+      const lista = document.getElementById('historialLista');
+
+      const modalFondo = document.getElementById('historialModalFondo');
+      const modalDescripcion = document.getElementById('historialModalDescripcion');
+      const inputId = document.getElementById('historialInputId');
+      const btnCancelar = document.getElementById('historialCancelar');
+
+      function normalizarTexto(texto) {
+        return String(texto || '').toLowerCase().trim();
+      }
+
+      function aplicarFiltros() {
+        if (!lista) return;
+
+        const tabla = filtroTabla ? filtroTabla.value : 'todas';
+        const accion = filtroAccion ? filtroAccion.value : 'todas';
+        const texto = normalizarTexto(filtroTexto ? filtroTexto.value : '');
+        const estado = filtroRevertidos ? filtroRevertidos.value : 'todos';
+
+        lista.querySelectorAll('.historial-item').forEach((item) => {
+          const el = item;
+          const elTabla = el.getAttribute('data-tabla') || '';
+          const elAccion = el.getAttribute('data-accion') || '';
+          const elRevertido = el.getAttribute('data-revertido') || '0';
+          const elTexto = normalizarTexto(el.getAttribute('data-texto') || '');
+
+          const okTabla = tabla === 'todas' || elTabla === tabla;
+          const okAccion = accion === 'todas' || elAccion === accion;
+          const okTexto = !texto || elTexto.includes(texto);
+          const okEstado =
+            estado === 'todos' ||
+            (estado === 'pendientes' && elRevertido === '0') ||
+            (estado === 'revertidos' && elRevertido === '1');
+
+          el.style.display = okTabla && okAccion && okTexto && okEstado ? '' : 'none';
+        });
+      }
+
+      function abrirModal(historialId, descripcion) {
+        if (!modalFondo || !inputId || !modalDescripcion) return;
+        inputId.value = String(historialId || '');
+        modalDescripcion.textContent = descripcion || '¿Seguro que quieres revertir este cambio?';
+        modalFondo.classList.add('abierto');
+        modalFondo.setAttribute('aria-hidden', 'false');
+      }
+
+      function cerrarModal() {
+        if (!modalFondo || !inputId) return;
+        inputId.value = '';
+        modalFondo.classList.remove('abierto');
+        modalFondo.setAttribute('aria-hidden', 'true');
+      }
+
+      filtroTabla && filtroTabla.addEventListener('change', aplicarFiltros);
+      filtroAccion && filtroAccion.addEventListener('change', aplicarFiltros);
+      filtroRevertidos && filtroRevertidos.addEventListener('change', aplicarFiltros);
+      filtroTexto && filtroTexto.addEventListener('input', aplicarFiltros);
+
+      btnCancelar && btnCancelar.addEventListener('click', cerrarModal);
+      modalFondo && modalFondo.addEventListener('click', (e) => {
+        if (e.target === modalFondo) cerrarModal();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') cerrarModal();
+      });
+
+      lista && lista.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const accion = target.getAttribute('data-accion');
+        if (!accion) return;
+
+        const item = target.closest('.historial-item');
+        if (!item) return;
+
+        if (accion === 'ver-detalle') {
+          const detalle = item.querySelector('.historial-detalle');
+          if (!detalle) return;
+          detalle.classList.toggle('abierto');
+          detalle.setAttribute('aria-hidden', detalle.classList.contains('abierto') ? 'false' : 'true');
+          return;
+        }
+
+        if (accion === 'revertir') {
+          const historialId = target.getAttribute('data-historial-id');
+          const descripcion = target.getAttribute('data-descripcion');
+          abrirModal(historialId, descripcion);
+        }
+      });
+
+      aplicarFiltros();
+    </script>
+  </div>
+</Layout>

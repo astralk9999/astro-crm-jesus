@@ -13,5 +13,11 @@
     "@supabase/mcp-server-supabase": "^0.5.8",
     "@supabase/supabase-js": "^2.79.0",
     "astro": "^5.14.8"
+  },
+  "devDependencies": {
+    "@astrojs/tailwind": "^6.0.2",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18"
   }
 }

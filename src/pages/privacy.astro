@@ -1,0 +1,286 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Política de Privacidad - SoftControl CRM" showNav={false}>
+  <div class="legal-container">
+    <div class="legal-header">
+      <a href="/signup" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span>Volver</span>
+      </a>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="logo-text">SoftControl</span>
+      </div>
+    </div>
+
+    <div class="legal-content">
+      <h1>Política de Privacidad</h1>
+      <p class="updated">Última actualización: Diciembre 2024</p>
+
+      <section>
+        <h2>1. Información que Recopilamos</h2>
+        <p>Recopilamos información que usted nos proporciona directamente:</p>
+        <ul>
+          <li>Nombre completo y datos de contacto</li>
+          <li>Dirección de correo electrónico</li>
+          <li>Información de la empresa u organización</li>
+          <li>Datos de uso del servicio</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. Uso de la Información</h2>
+        <p>Utilizamos la información recopilada para:</p>
+        <ul>
+          <li>Proporcionar y mantener nuestro servicio</li>
+          <li>Enviar notificaciones importantes sobre su cuenta</li>
+          <li>Mejorar y personalizar la experiencia del usuario</li>
+          <li>Analizar el uso del servicio para mejoras</li>
+          <li>Cumplir con obligaciones legales</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>3. Protección de Datos</h2>
+        <p>Implementamos medidas de seguridad técnicas y organizativas para proteger su información personal, incluyendo:</p>
+        <ul>
+          <li>Encriptación de datos en tránsito y en reposo</li>
+          <li>Acceso restringido a información personal</li>
+          <li>Monitoreo continuo de seguridad</li>
+          <li>Copias de seguridad regulares</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4. Compartir Información</h2>
+        <p>No vendemos ni compartimos su información personal con terceros, excepto:</p>
+        <ul>
+          <li>Con su consentimiento explícito</li>
+          <li>Para cumplir con obligaciones legales</li>
+          <li>Con proveedores de servicios que nos ayudan a operar</li>
+          <li>En caso de fusión o adquisición de la empresa</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. Cookies y Tecnologías Similares</h2>
+        <p>Utilizamos cookies y tecnologías similares para:</p>
+        <ul>
+          <li>Mantener su sesión iniciada</li>
+          <li>Recordar sus preferencias</li>
+          <li>Analizar el uso del servicio</li>
+          <li>Mejorar la seguridad</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>6. Sus Derechos</h2>
+        <p>Usted tiene derecho a:</p>
+        <ul>
+          <li>Acceder a su información personal</li>
+          <li>Corregir datos inexactos</li>
+          <li>Solicitar la eliminación de sus datos</li>
+          <li>Oponerse al procesamiento de sus datos</li>
+          <li>Exportar sus datos en formato portable</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>7. Retención de Datos</h2>
+        <p>Conservamos su información personal mientras su cuenta esté activa o según sea necesario para proporcionarle servicios. Puede solicitar la eliminación de sus datos en cualquier momento.</p>
+      </section>
+
+      <section>
+        <h2>8. Cambios en esta Política</h2>
+        <p>Podemos actualizar esta política de privacidad periódicamente. Le notificaremos sobre cambios significativos mediante correo electrónico o un aviso en nuestro servicio.</p>
+      </section>
+
+      <section>
+        <h2>9. Contacto</h2>
+        <p>Para preguntas sobre esta política de privacidad, contáctenos en: <a href="mailto:privacy@softcontrol.com">privacy@softcontrol.com</a></p>
+      </section>
+    </div>
+
+    <div class="legal-footer">
+      <p>&copy; 2024 SoftControl. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .legal-container {
+    min-height: 100vh;
+    background: #05060b;
+    background-image:
+      linear-gradient(rgba(0, 255, 242, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 242, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .legal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0, 255, 242, 0.1);
+  }
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+
+  .back-link:hover {
+    color: #00fff2;
+  }
+
+  .back-link svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #00fff2, #ff00ff);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.4);
+  }
+
+  .logo-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00fff2, #ff00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .legal-content {
+    flex: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .legal-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 30px rgba(0, 255, 242, 0.3);
+  }
+
+  .updated {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 3rem;
+  }
+
+  section {
+    margin-bottom: 2.5rem;
+  }
+
+  section h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #00fff2;
+    margin-bottom: 1rem;
+  }
+
+  section p {
+    color: #cbd5e1;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  section ul li {
+    color: #94a3b8;
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  section ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: #00fff2;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+
+  section a {
+    color: #00fff2;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  section a:hover {
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+
+  .legal-footer {
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(0, 255, 242, 0.1);
+    text-align: center;
+  }
+
+  .legal-footer p {
+    color: #64748b;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 640px) {
+    .legal-header {
+      padding: 1rem;
+    }
+
+    .legal-content {
+      padding: 2rem 1rem;
+    }
+
+    .legal-content h1 {
+      font-size: 1.75rem;
+    }
+  }
+</style>

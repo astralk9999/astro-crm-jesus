@@ -1,0 +1,121 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isAuthenticated } from '../lib/services/authService';
+
+const token = Astro.cookies.get('sb-access-token')?.value;
+const autenticado = await isAuthenticated(token);
+
+if (!autenticado) {
+  return Astro.redirect('/login');
+}
+---
+
+<Layout title="Notificaciones - SoftControl CRM">
+  <link rel="stylesheet" href="/estilos/Notificaciones.css" />
+
+  <div class="pagina-notificaciones">
+    <header class="pagina-notificaciones-header">
+      <div>
+        <h1>Notificaciones</h1>
+        <p>Actividad reciente de clientes, productos y licencias.</p>
+      </div>
+
+      <div class="pagina-notificaciones-toolbar">
+        <button id="marcarTodas" class="noti-btn-secundario" type="button">Marcar todas como leídas</button>
+        <button id="limpiarTodas" class="noti-btn-secundario" type="button">Limpiar</button>
+      </div>
+    </header>
+
+    <section class="pagina-notificaciones-panel" aria-label="Listado de notificaciones">
+      <div id="listaNotificaciones" class="pagina-notificaciones-lista"></div>
+    </section>
+  </div>
+
+  <script>
+    import {
+      obtenerNotificaciones,
+      marcarNotificacionComoLeida,
+      marcarTodasComoLeidas,
+      limpiarNotificaciones,
+    } from '../servicios/NotificacionesService';
+
+    const lista = document.getElementById('listaNotificaciones');
+    const btnMarcarTodas = document.getElementById('marcarTodas');
+    const btnLimpiar = document.getElementById('limpiarTodas');
+
+    function iconoPorTipo(tipo) {
+      if (tipo === 'cliente') {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+      }
+      if (tipo === 'producto') {
+        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>';
+      }
+      return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>';
+    }
+
+    function formatearFecha(iso) {
+      try {
+        const fecha = new Date(iso);
+        return fecha.toLocaleString('es-ES');
+      } catch {
+        return '';
+      }
+    }
+
+    function renderizar() {
+      if (!lista) return;
+
+      const notificaciones = obtenerNotificaciones();
+
+      if (notificaciones.length === 0) {
+        lista.innerHTML = '<div class="panel-notificaciones-vacio">No tienes notificaciones todavía.</div>';
+        return;
+      }
+
+      lista.innerHTML = notificaciones
+        .map((n) => {
+          const enlace = n.enlace || '#';
+          const clases = `noti-item ${n.leida ? '' : 'no-leida'}`;
+
+          return `
+            <a class="${clases}" href="${enlace}" data-id="${n.id}" data-enlace="${n.enlace || ''}">
+              <div class="noti-icono">${iconoPorTipo(n.tipo)}</div>
+              <div class="noti-cuerpo">
+                <div class="noti-cuerpo-titulo">${n.titulo}</div>
+                <div class="noti-cuerpo-descripcion">${n.descripcion}</div>
+                <div class="noti-cuerpo-meta">${formatearFecha(n.fecha_iso)}</div>
+              </div>
+            </a>
+          `;
+        })
+        .join('');
+
+      lista.querySelectorAll('[data-id]').forEach((el) => {
+        el.addEventListener('click', (e) => {
+          const target = e.currentTarget;
+          const id = target.getAttribute('data-id');
+
+          if (id) {
+            marcarNotificacionComoLeida(id);
+          }
+        });
+      });
+    }
+
+    btnMarcarTodas?.addEventListener('click', () => {
+      marcarTodasComoLeidas();
+      renderizar();
+    });
+
+    btnLimpiar?.addEventListener('click', () => {
+      limpiarNotificaciones();
+      renderizar();
+    });
+
+    window.addEventListener('notificaciones:actualizadas', () => {
+      renderizar();
+    });
+
+    renderizar();
+  </script>
+</Layout>

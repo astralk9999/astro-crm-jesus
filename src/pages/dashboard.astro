@@ -1,0 +1,1030 @@
+---
+// Dashboard principal del CRM con diseño moderno y estadísticas
+import Layout from '../layouts/Layout.astro';
+import { isAuthenticated, getUserProfile } from '../lib/services/authService';
+import { getClients } from '../lib/services/clientsService';
+import { getProducts } from '../lib/services/productsService';
+import { getLicenses } from '../lib/services/licensesService';
+
+// Verificar autenticación
+const token = Astro.cookies.get('sb-access-token')?.value;
+const authenticated = await isAuthenticated(token);
+
+if (!authenticated) {
+  return Astro.redirect('/login');
+}
+
+// Obtener perfil del usuario
+const userProfile = await getUserProfile(token);
+
+// Obtener estadísticas - IMPORTANTE: pasar el token para autenticar las consultas
+const clientsResponse = await getClients(token);
+const totalClients = clientsResponse.success && clientsResponse.data ? clientsResponse.data.length : 0;
+
+const productsResponse = await getProducts(token);
+const totalProducts = productsResponse.success && productsResponse.data ? productsResponse.data.length : 0;
+
+const licensesResponse = await getLicenses(token);
+const allLicenses = licensesResponse.success && licensesResponse.data ? licensesResponse.data : [];
+const activeLicenses = allLicenses.filter((l: any) => l.status === 'activa').length;
+const pendingLicenses = allLicenses.filter((l: any) => l.status === 'pendiente_pago').length;
+
+// Licencias recientes (ordenadas por fecha de creación)
+const recentLicenses = allLicenses.slice(0, 5);
+
+// Obtener fecha actual formateada
+const now = new Date();
+const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+const formattedDate = now.toLocaleDateString('es-ES', dateOptions);
+---
+
+<Layout title="Dashboard - SoftControl CRM">
+  <div class="dashboard-container">
+    <!-- Header del dashboard con animación de entrada -->
+    <header class="dashboard-header animate-in">
+      <div class="header-welcome">
+        <div class="welcome-text">
+          <h1>¡Hola, {userProfile?.full_name?.split(' ')[0] || 'Usuario'}!</h1>
+          <p class="date-text">{formattedDate}</p>
+        </div>
+        <div class="user-role-badge" data-role={userProfile?.role}>
+          <span class="role-dot"></span>
+          <span>{userProfile?.role === 'admin' ? 'Administrador' : 'Staff'}</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/clientes/nuevo" class="btn-new-client">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span>Nuevo Cliente</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Tarjetas de estadísticas con animaciones escalonadas -->
+    <section class="stats-grid">
+      <!-- Total Clientes -->
+      <div class="stat-card stat-blue animate-in animate-delay-1">
+        <div class="stat-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Clientes</span>
+          <span class="stat-value">{totalClients}</span>
+          <div class="stat-trend up">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+            <span>Activos</span>
+          </div>
+        </div>
+        <a href="/clientes" class="stat-link" aria-label="Ver clientes">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <div class="stat-decoration"></div>
+      </div>
+
+      <!-- Total Productos -->
+      <div class="stat-card stat-emerald animate-in animate-delay-2">
+        <div class="stat-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Productos</span>
+          <span class="stat-value">{totalProducts}</span>
+          <div class="stat-trend neutral">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4" />
+            </svg>
+            <span>En catálogo</span>
+          </div>
+        </div>
+        <a href="/productos" class="stat-link" aria-label="Ver productos">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <div class="stat-decoration"></div>
+      </div>
+
+      <!-- Licencias Activas -->
+      <div class="stat-card stat-violet animate-in animate-delay-3">
+        <div class="stat-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Licencias Activas</span>
+          <span class="stat-value">{activeLicenses}</span>
+          <div class="stat-trend up">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Vigentes</span>
+          </div>
+        </div>
+        <a href="/licencias" class="stat-link" aria-label="Ver licencias">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <div class="stat-decoration"></div>
+      </div>
+
+      <!-- Pagos Pendientes -->
+      <div class="stat-card stat-amber animate-in animate-delay-4">
+        <div class="stat-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Pagos Pendientes</span>
+          <span class="stat-value">{pendingLicenses}</span>
+          <div class="stat-trend {pendingLicenses > 0 ? 'warning' : 'neutral'}">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{pendingLicenses > 0 ? 'Requiere atención' : 'Todo al día'}</span>
+          </div>
+        </div>
+        <a href="/licencias" class="stat-link" aria-label="Ver pendientes">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+        <div class="stat-decoration"></div>
+      </div>
+    </section>
+
+    <!-- Contenido principal: Panel de licencias recientes (ancho completo) -->
+    <section class="main-section animate-in animate-delay-5">
+      <div class="panel licenses-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h2>Licencias Recientes</h2>
+          </div>
+          <a href="/licencias" class="panel-action">Ver todas</a>
+        </div>
+        
+        <div class="panel-content">
+          {recentLicenses.length > 0 ? (
+            <div class="license-list">
+              {recentLicenses.map((license, index) => (
+                <div class="license-item" style={`-webkit-animation-delay: ${index * 0.1}s; animation-delay: ${index * 0.1}s`}>
+                  <div class="license-avatar">
+                    <span>{license.client?.name?.charAt(0) || 'C'}</span>
+                  </div>
+                  <div class="license-info">
+                    <span class="license-client">{license.client?.name || 'Cliente'}</span>
+                    <span class="license-product">{license.product?.name || 'Producto'}</span>
+                  </div>
+                  <div class={`license-status status-${license.status === 'activa' ? 'active' : license.status === 'pendiente_pago' ? 'pending' : 'inactive'}`}>
+                    <span class="status-dot"></span>
+                    <span>{license.status === 'activa' ? 'Activa' : license.status === 'pendiente_pago' ? 'Pendiente' : 'Inactiva'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div class="empty-state">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p>No hay licencias registradas</p>
+              <a href="/licencias/nuevo" class="empty-action">Crear primera licencia</a>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  /* ============================================
+     ESTILOS DEL DASHBOARD - Cross-browser compatible
+     Compatible con: Chrome, Firefox, Safari, Edge
+     ============================================ */
+
+  .dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    /* Prevenir desbordamiento horizontal */
+    overflow-x: hidden;
+    width: 100%;
+    /* Padding responsive */
+    padding: 0;
+    /* Asegurar que el texto no desborde */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Header del dashboard - con prefijos de compatibilidad */
+  .dashboard-header {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+
+  .header-welcome {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Fallback para gap en Safari antiguo */
+  .header-welcome > * + * {
+    margin-top: 0.75rem;
+  }
+
+  @supports (gap: 0.75rem) {
+    .header-welcome > * + * {
+      margin-top: 0;
+    }
+  }
+
+  .welcome-text h1 {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 30px rgba(0, 255, 242, 0.2);
+  }
+
+  .date-text {
+    font-size: 0.9375rem;
+    color: #94a3b8;
+    text-transform: capitalize;
+  }
+
+  .user-role-badge {
+    display: -webkit-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.875rem;
+    background: rgba(0, 255, 242, 0.1);
+    border: 1px solid rgba(0, 255, 242, 0.3);
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #00fff2;
+  }
+
+  .user-role-badge[data-role="admin"] {
+    background: rgba(255, 0, 255, 0.1);
+    border-color: rgba(255, 0, 255, 0.3);
+    color: #ff00ff;
+  }
+
+  .role-dot {
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+    -webkit-animation: pulse 2s ease-in-out infinite;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @-webkit-keyframes pulse {
+    0%, 100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+    50% { opacity: 0.7; -webkit-transform: scale(1.1); transform: scale(1.1); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+    50% { opacity: 0.7; -webkit-transform: scale(1.1); transform: scale(1.1); }
+  }
+
+  .btn-new-client {
+    display: -webkit-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(0, 180, 255, 0.2));
+    border: 1px solid #00fff2;
+    color: #00fff2;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-box-shadow: 0 0 20px rgba(0, 255, 242, 0.3), inset 0 0 20px rgba(0, 255, 242, 0.1);
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.3), inset 0 0 20px rgba(0, 255, 242, 0.1);
+  }
+
+  .btn-new-client:hover {
+    -webkit-transform: translateY(-2px);
+    -ms-transform: translateY(-2px);
+    transform: translateY(-2px);
+    -webkit-box-shadow: 0 0 30px rgba(0, 255, 242, 0.5), inset 0 0 30px rgba(0, 255, 242, 0.15);
+    box-shadow: 0 0 30px rgba(0, 255, 242, 0.5), inset 0 0 30px rgba(0, 255, 242, 0.15);
+    color: #00fff2;
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+
+  .btn-new-client svg {
+    width: 20px;
+    height: 20px;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+  }
+
+  /* Grid de estadísticas - FORZAR 4 columnas en desktop */
+  .stats-grid {
+    display: -ms-grid;
+    display: grid;
+    /* 4 columnas fijas en desktop */
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  /* 2 columnas en tablets */
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* 1 columna solo en móviles pequeños */
+  @media (max-width: 640px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .stat-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    gap: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(0, 255, 242, 0.15);
+    -webkit-box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stat-card:hover {
+    -webkit-transform: translateY(-4px);
+    -ms-transform: translateY(-4px);
+    transform: translateY(-4px);
+    border-color: rgba(0, 255, 242, 0.3);
+    -webkit-box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 255, 242, 0.1);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 255, 242, 0.1);
+  }
+
+  .stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .stat-blue .stat-icon {
+    background: rgba(0, 180, 255, 0.15);
+    border: 1px solid rgba(0, 180, 255, 0.3);
+    color: #00b4ff;
+    box-shadow: 0 0 15px rgba(0, 180, 255, 0.2);
+  }
+
+  .stat-emerald .stat-icon {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+  }
+
+  .stat-violet .stat-icon {
+    background: rgba(191, 0, 255, 0.15);
+    border: 1px solid rgba(191, 0, 255, 0.3);
+    color: #bf00ff;
+    box-shadow: 0 0 15px rgba(191, 0, 255, 0.2);
+  }
+
+  .stat-amber .stat-icon {
+    background: rgba(255, 255, 0, 0.15);
+    border: 1px solid rgba(255, 255, 0, 0.3);
+    color: #ffff00;
+    box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
+  }
+
+  .stat-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .stat-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .stat-trend {
+    display: -webkit-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .stat-trend svg {
+    width: 14px;
+    height: 14px;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+  }
+
+  .stat-trend.up {
+    color: #00ff88;
+  }
+
+  .stat-trend.warning {
+    color: #ffff00;
+  }
+
+  .stat-trend.neutral {
+    color: #94a3b8;
+  }
+
+  .stat-link {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 32px;
+    height: 32px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    background: rgba(0, 255, 242, 0.1);
+    border: 1px solid rgba(0, 255, 242, 0.2);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stat-link:hover {
+    background: rgba(0, 255, 242, 0.2);
+    border-color: #00fff2;
+    color: #00fff2;
+    box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+  }
+
+  .stat-link svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .stat-decoration {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0.15;
+    filter: blur(20px);
+  }
+
+  .stat-blue .stat-decoration {
+    background: #00b4ff;
+  }
+
+  .stat-emerald .stat-decoration {
+    background: #00ff88;
+  }
+
+  .stat-violet .stat-decoration {
+    background: #bf00ff;
+  }
+
+  .stat-amber .stat-decoration {
+    background: #ffff00;
+  }
+
+  /* Sección principal - ancho completo */
+  .main-section {
+    width: 100%;
+  }
+
+  /* Paneles - Futurista Neón */
+  .panel {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    border: 1px solid rgba(0, 255, 242, 0.15);
+    -webkit-box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 255, 242, 0.15);
+  }
+
+  .panel-title {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .panel-title svg {
+    width: 20px;
+    height: 20px;
+    color: #00fff2;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+  }
+
+  .panel-title h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+  }
+
+  .panel-action {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #00fff2;
+    text-decoration: none;
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .panel-action:hover {
+    color: #00fff2;
+    text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+  }
+
+  .panel-content {
+    padding: 1rem;
+  }
+
+  /* Lista de licencias - Cross-browser compatible */
+  .license-list {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Fallback para gap */
+  .license-list > * + * {
+    margin-top: 0.5rem;
+  }
+
+  @supports (gap: 0.5rem) {
+    .license-list > * + * {
+      margin-top: 0;
+    }
+  }
+
+  .license-item {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 255, 242, 0.1);
+    border-radius: 12px;
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-animation: fadeInUp 0.5s ease forwards;
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  @-webkit-keyframes fadeInUp {
+    from {
+      opacity: 0;
+      -webkit-transform: translateY(10px);
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      -webkit-transform: translateY(0);
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      -webkit-transform: translateY(10px);
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      -webkit-transform: translateY(0);
+      transform: translateY(0);
+    }
+  }
+
+  .license-item:hover {
+    background: rgba(0, 255, 242, 0.05);
+    border-color: rgba(0, 255, 242, 0.2);
+  }
+
+  .license-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #00fff2, #ff00ff);
+    border-radius: 10px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0a0a10;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+    box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+  }
+
+  .license-info {
+    -webkit-box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    min-width: 0;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .license-client {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    -o-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+  }
+
+  .license-product {
+    font-size: 0.8125rem;
+    color: #94a3b8;
+  }
+
+  .license-status {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    -webkit-flex-shrink: 0;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-active {
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    color: #00ff88;
+  }
+
+  .status-pending {
+    background: rgba(255, 255, 0, 0.15);
+    border: 1px solid rgba(255, 255, 0, 0.4);
+    color: #ffff00;
+  }
+
+  .status-inactive {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Estado vacío */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+  }
+
+  .empty-state svg {
+    width: 48px;
+    height: 48px;
+    color: rgba(0, 255, 242, 0.3);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9375rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+  }
+
+  .empty-action {
+    display: -webkit-inline-box;
+    display: -webkit-inline-flex;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 255, 242, 0.1);
+    border: 1px solid rgba(0, 255, 242, 0.3);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #00fff2;
+    text-decoration: none;
+    -webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .empty-action:hover {
+    background: rgba(0, 255, 242, 0.2);
+    border-color: #00fff2;
+    box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+  }
+
+  /* ============================================
+     RESPONSIVE Y COMPATIBILIDAD CROSS-BROWSER
+     ============================================ */
+  @media (max-width: 640px) {
+    .dashboard-header {
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+      flex-direction: column;
+      -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+      align-items: stretch;
+    }
+
+    .header-actions {
+      margin-top: 1rem;
+    }
+
+    .btn-new-client {
+      width: 100%;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+    }
+
+    .welcome-text h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  /* ============================================
+     REDUCCIÓN DE MOVIMIENTO PARA ACCESIBILIDAD
+     ============================================ */
+  @media (prefers-reduced-motion: reduce) {
+    .stat-card,
+    .btn-new-client,
+    .license-item,
+    .stat-link,
+    .panel-action,
+    .empty-action {
+      -webkit-transition: none !important;
+      -o-transition: none !important;
+      transition: none !important;
+    }
+
+    .stat-card:hover {
+      -webkit-transform: none !important;
+      -ms-transform: none !important;
+      transform: none !important;
+    }
+
+    .btn-new-client:hover {
+      -webkit-transform: none !important;
+      -ms-transform: none !important;
+      transform: none !important;
+    }
+
+    .role-dot {
+      -webkit-animation: none !important;
+      animation: none !important;
+    }
+
+    .license-item {
+      -webkit-animation: none !important;
+      animation: none !important;
+      opacity: 1 !important;
+    }
+  }
+
+  /* ============================================
+     SOPORTE PARA PANTALLAS TÁCTILES
+     ============================================ */
+  @media (hover: none) and (pointer: coarse) {
+    /* Aumentar áreas táctiles */
+    .stat-link {
+      width: 44px;
+      height: 44px;
+    }
+
+    .btn-new-client {
+      min-height: 48px;
+    }
+
+    /* Deshabilitar efectos hover en touch */
+    .stat-card:hover {
+      -webkit-transform: none;
+      -ms-transform: none;
+      transform: none;
+      -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  /* ============================================
+     SOPORTE PARA MODO DE ALTO CONTRASTE
+     ============================================ */
+  @media (prefers-contrast: high) {
+    .stat-card {
+      border: 2px solid #18181b;
+    }
+
+    .panel {
+      border: 2px solid #18181b;
+    }
+
+    .license-item {
+      border: 1px solid #71717a;
+    }
+  }
+</style>

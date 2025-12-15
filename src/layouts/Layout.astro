@@ -1,22 +1,2001 @@
+---
+// Layout principal del CRM con sidebar moderno, header mejorado y transiciones suaves
+import { ViewTransitions } from 'astro:transitions';
+import '../styles/transitions.css';
+import { isAdmin } from '../lib/services/authService';
+
+export interface Props {
+	title?: string;
+	showNav?: boolean;
+}
+
+const { title = 'SoftControl CRM', showNav = true } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+// Verificar si el usuario está autenticado leyendo las cookies directamente
+const accessToken = Astro.cookies.get('sb-access-token')?.value;
+const refreshToken = Astro.cookies.get('sb-refresh-token')?.value;
+const authenticated = !!(accessToken || refreshToken);
+
+const adminAutenticado = accessToken ? await isAdmin(accessToken) : false;
+
+// Mostrar navegación solo si se solicita Y el usuario está autenticado
+const shouldShowNav = showNav && authenticated;
+
+// Definición de los items del menú para mantener el código limpio
+const menuItemsBase = [
+	{ 
+		href: '/dashboard', 
+		label: 'Dashboard', 
+		icon: 'dashboard',
+		match: (path: string) => path === '/dashboard'
+	},
+	{ 
+		href: '/clientes', 
+		label: 'Clientes', 
+		icon: 'users',
+		match: (path: string) => path.startsWith('/clientes')
+	},
+	{ 
+		href: '/productos', 
+		label: 'Productos', 
+		icon: 'package',
+		match: (path: string) => path.startsWith('/productos')
+	},
+	{ 
+		href: '/licencias', 
+		label: 'Licencias', 
+		icon: 'shield',
+		match: (path: string) => path.startsWith('/licencias')
+	},
+];
+
+const menuItems = adminAutenticado
+	? [
+		...menuItemsBase,
+		{
+			href: '/Historial',
+			label: 'Historial',
+			icon: 'history',
+			match: (path: string) => path === '/Historial',
+		},
+	]
+	: menuItemsBase;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
+		<link rel="stylesheet" href="/estilos/Notificaciones.css" />
+		<!-- Fuentes optimizadas -->
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+		<!-- View Transitions para navegación suave tipo slide-down -->
+		<ViewTransitions fallback="swap" />
+		<!-- Estilos de transiciones -->
+		<!-- Estilos de transiciones importados globalmente -->
 	</head>
-	<body>
-		<slot />
+	<body class="bg-surface-500 antialiased">
+		{shouldShowNav ? (
+			<div class="app-container">
+				<!-- Sidebar - persiste entre navegaciones para evitar parpadeos -->
+				<aside id="sidebar" class="sidebar" transition:persist transition:name="sidebar">
+					<!-- Logo y Brand -->
+					<div class="sidebar-header">
+						<a href="/dashboard" class="flex items-center gap-3">
+							<div class="logo-icon">
+								<svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+								</svg>
+							</div>
+							<span class="logo-text">SoftControl</span>
+						</a>
+					</div>
+
+					<!-- Navegación principal -->
+					<nav class="sidebar-nav">
+						<div class="nav-section">
+							<span class="nav-section-title">Menú Principal</span>
+							<ul class="nav-list">
+								{menuItems.map((item) => (
+									<li>
+										<a 
+											href={item.href} 
+											class={`nav-item ${item.match(currentPath) ? 'active' : ''}`}
+										>
+											<span class="nav-icon">
+												{item.icon === 'dashboard' && (
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+													</svg>
+												)}
+												{item.icon === 'users' && (
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+													</svg>
+												)}
+												{item.icon === 'package' && (
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+													</svg>
+												)}
+												{item.icon === 'shield' && (
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+													</svg>
+												)}
+												{item.icon === 'history' && (
+													<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v5h5" />
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.05 11a9 9 0 1 0 .5-3" />
+														<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 3" />
+													</svg>
+												)}
+											</span>
+											<span class="nav-label">{item.label}</span>
+										</a>
+									</li>
+								))}
+							</ul>
+						</div>
+
+						<!-- Acciones rápidas -->
+						<div class="nav-section">
+							<span class="nav-section-title">Acciones</span>
+							<ul class="nav-list">
+								<li>
+									<a href="/clientes/nuevo" class="nav-item nav-item-accent">
+										<span class="nav-icon">
+											<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+											</svg>
+										</span>
+										<span class="nav-label">Nuevo Cliente</span>
+									</a>
+								</li>
+							</ul>
+						</div>
+					</nav>
+
+					<!-- Pie del sidebar -->
+					<div class="sidebar-footer">
+						<button id="logoutBtn" class="logout-btn">
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+							</svg>
+							<span>Cerrar sesión</span>
+						</button>
+					</div>
+				</aside>
+
+				<!-- Contenido principal -->
+				<div class="main-wrapper">
+					<!-- Header superior - persiste entre navegaciones -->
+					<header class="main-header" transition:persist transition:name="header">
+						<div class="header-left">
+							<!-- Botón toggle sidebar (móvil) -->
+							<button id="sidebarToggle" class="sidebar-toggle">
+								<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+								</svg>
+							</button>
+							
+							<!-- Barra de búsqueda -->
+							<div class="search-bar">
+								<svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+								</svg>
+								<input type="text" placeholder="Buscar clientes, productos, licencias..." class="search-input" />
+								<kbd class="search-shortcut">⌘K</kbd>
+							</div>
+						</div>
+
+						<div class="header-right">
+							<!-- Notificaciones -->
+							<div class="noti-wrapper">
+								<button id="notificacionesBtn" class="header-btn" title="Notificaciones">
+									<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+									</svg>
+									<span id="notificacionesBadge" class="notification-badge noti-oculto">0</span>
+								</button>
+
+								<div id="panelNotificaciones" class="panel-notificaciones" aria-hidden="true">
+									<div class="panel-notificaciones-encabezado">
+										<div class="panel-notificaciones-titulo">
+											<h3>Notificaciones</h3>
+											<span id="panelNotificacionesSubtitulo" class="panel-notificaciones-subtitulo">Sin actividad reciente</span>
+										</div>
+										<div class="panel-notificaciones-acciones">
+											<button id="notificacionesMarcarTodas" class="noti-btn-secundario" type="button">Marcar todas</button>
+										</div>
+									</div>
+									<div id="panelNotificacionesLista" class="panel-notificaciones-lista"></div>
+									<div class="panel-notificaciones-pie">
+										<a class="panel-notificaciones-link" href="/Notificaciones">Ver todas</a>
+										<a class="panel-notificaciones-link" href="/Perfil">Perfil</a>
+									</div>
+								</div>
+							</div>
+
+							<!-- Perfil de usuario -->
+							<div class="user-menu">
+								<a href="/Perfil" class="user-btn" title="Perfil">
+									<div class="user-avatar">
+										<span>SC</span>
+									</div>
+									<svg class="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+									</svg>
+								</a>
+							</div>
+						</div>
+					</header>
+
+					<!-- Contenido de la página - se anima con transición futurista -->
+					<main class="main-content" transition:animate="slide">
+						<slot />
+					</main>
+				</div>
+			</div>
+		) : (
+			<!-- Layout sin navegación (login, signup, etc.) -->
+			<main class="min-h-screen">
+				<slot />
+			</main>
+		)}
+
+		<script>
+			import { supabase } from '../lib/database/supabase';
+			import {
+				obtenerNotificaciones,
+				obtenerConteoNoLeidas,
+				marcarNotificacionComoLeida,
+				marcarTodasComoLeidas,
+			} from '../servicios/NotificacionesService';
+
+			// Función para inicializar todos los event listeners
+			function initializeEventListeners() {
+				// Toggle sidebar en móvil
+				const sidebarToggle = document.getElementById('sidebarToggle');
+				const sidebar = document.getElementById('sidebar');
+				
+				if (sidebarToggle && sidebar) {
+					// Remover listeners previos para evitar duplicados
+					const newSidebarToggle = sidebarToggle.cloneNode(true);
+					sidebarToggle.parentNode?.replaceChild(newSidebarToggle, sidebarToggle);
+					
+					newSidebarToggle.addEventListener('click', () => {
+						sidebar.classList.toggle('open');
+					});
+				}
+
+				// Lógica de logout
+				const logoutBtn = document.getElementById('logoutBtn');
+				if (logoutBtn) {
+					const newLogoutBtn = logoutBtn.cloneNode(true);
+					logoutBtn.parentNode?.replaceChild(newLogoutBtn, logoutBtn);
+					
+					newLogoutBtn.addEventListener('click', async () => {
+						try {
+							await supabase.auth.signOut();
+							document.cookie = 'sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+							document.cookie = 'sb-refresh-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+							localStorage.removeItem('sb-access-token');
+							localStorage.removeItem('sb-refresh-token');
+							window.location.href = '/login';
+						} catch (error) {
+							console.error('Error al cerrar sesión:', error);
+							window.location.href = '/login';
+						}
+					});
+				}
+
+				// Actualizar estado activo del menú
+				updateActiveNavItem();
+
+				// Inicializar panel de notificaciones
+				inicializarNotificaciones();
+			}
+
+			function iconoPorTipo(tipo) {
+				if (tipo === 'cliente') {
+					return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+				}
+				if (tipo === 'producto') {
+					return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>';
+				}
+				return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z"></path><path d="M9 12l2 2 4-4"></path></svg>';
+			}
+
+			function formatearFecha(iso) {
+				try {
+					return new Date(iso).toLocaleString('es-ES');
+				} catch {
+					return '';
+				}
+			}
+
+			function actualizarBadgeNotificaciones() {
+				const badge = document.getElementById('notificacionesBadge');
+				if (!badge) return;
+
+				const conteo = obtenerConteoNoLeidas();
+				badge.textContent = String(conteo);
+				badge.classList.toggle('noti-oculto', conteo <= 0);
+			}
+
+			function renderizarPanelNotificaciones() {
+				const lista = document.getElementById('panelNotificacionesLista');
+				const subtitulo = document.getElementById('panelNotificacionesSubtitulo');
+				if (!lista) return;
+
+				const notificaciones = obtenerNotificaciones().slice(0, 6);
+				if (subtitulo) {
+					const noLeidas = obtenerConteoNoLeidas();
+					subtitulo.textContent = noLeidas > 0 ? `${noLeidas} sin leer` : 'Todo al día';
+				}
+
+				if (notificaciones.length === 0) {
+					lista.innerHTML = '<div class="panel-notificaciones-vacio">No tienes notificaciones todavía.</div>';
+					return;
+				}
+
+				lista.innerHTML = notificaciones
+					.map((n) => {
+						const enlace = n.enlace || '#';
+						const clases = `noti-item ${n.leida ? '' : 'no-leida'}`;
+
+						return `
+							<a class="${clases}" href="${enlace}" data-id="${n.id}">
+								<div class="noti-icono">${iconoPorTipo(n.tipo)}</div>
+								<div class="noti-cuerpo">
+									<div class="noti-cuerpo-titulo">${n.titulo}</div>
+									<div class="noti-cuerpo-descripcion">${n.descripcion}</div>
+									<div class="noti-cuerpo-meta">${formatearFecha(n.fecha_iso)}</div>
+								</div>
+							</a>
+						`;
+					})
+					.join('');
+
+				lista.querySelectorAll('[data-id]').forEach((el) => {
+					el.addEventListener('click', (e) => {
+						const target = e.currentTarget;
+						const id = target?.getAttribute('data-id');
+						if (id) {
+							marcarNotificacionComoLeida(id);
+						}
+					});
+				});
+			}
+
+			function cerrarPanelNotificaciones() {
+				const panel = document.getElementById('panelNotificaciones');
+				if (!panel) return;
+				panel.classList.remove('activo');
+				panel.setAttribute('aria-hidden', 'true');
+			}
+
+			function alternarPanelNotificaciones() {
+				const panel = document.getElementById('panelNotificaciones');
+				if (!panel) return;
+
+				const estaActivo = panel.classList.contains('activo');
+				if (estaActivo) {
+					cerrarPanelNotificaciones();
+					return;
+				}
+
+				renderizarPanelNotificaciones();
+				panel.classList.add('activo');
+				panel.setAttribute('aria-hidden', 'false');
+			}
+
+			function inicializarNotificaciones() {
+				const btn = document.getElementById('notificacionesBtn');
+				const btnMarcarTodas = document.getElementById('notificacionesMarcarTodas');
+
+				actualizarBadgeNotificaciones();
+				renderizarPanelNotificaciones();
+
+				if (btn) {
+					const nuevoBtn = btn.cloneNode(true);
+					btn.parentNode?.replaceChild(nuevoBtn, btn);
+					nuevoBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						alternarPanelNotificaciones();
+					});
+				}
+
+				if (btnMarcarTodas) {
+					const nuevoBtnMarcarTodas = btnMarcarTodas.cloneNode(true);
+					btnMarcarTodas.parentNode?.replaceChild(nuevoBtnMarcarTodas, btnMarcarTodas);
+					nuevoBtnMarcarTodas.addEventListener('click', (e) => {
+						e.stopPropagation();
+						marcarTodasComoLeidas();
+						actualizarBadgeNotificaciones();
+						renderizarPanelNotificaciones();
+					});
+				}
+			}
+
+			// Función para actualizar el item activo del menú
+			function updateActiveNavItem() {
+				const currentPath = window.location.pathname;
+				const navItems = document.querySelectorAll('.nav-item');
+				
+				navItems.forEach((item) => {
+					const href = item.getAttribute('href');
+					if (href) {
+						const isActive = currentPath === href || 
+							(href !== '/dashboard' && currentPath.startsWith(href));
+						
+						if (isActive) {
+							item.classList.add('active');
+						} else {
+							item.classList.remove('active');
+						}
+					}
+				});
+			}
+
+			// Inicializar al cargar la página
+			initializeEventListeners();
+
+			// Re-inicializar después de cada navegación con View Transitions
+			document.addEventListener('astro:after-swap', () => {
+				initializeEventListeners();
+			});
+
+			// Atajo de teclado para búsqueda (solo se registra una vez)
+			document.addEventListener('keydown', (e) => {
+				if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+					e.preventDefault();
+					const searchInput = document.querySelector('.search-input');
+					if (searchInput instanceof HTMLInputElement) searchInput.focus();
+				}
+
+				if (e.key === 'Escape') {
+					cerrarPanelNotificaciones();
+				}
+			});
+
+			// Cerrar sidebar al hacer clic fuera (en móvil) - solo se registra una vez
+			document.addEventListener('click', (e) => {
+				const sidebar = document.getElementById('sidebar');
+				const sidebarToggle = document.getElementById('sidebarToggle');
+				const panel = document.getElementById('panelNotificaciones');
+				const btn = document.getElementById('notificacionesBtn');
+				
+				if (sidebar && sidebarToggle && window.innerWidth < 1024 && 
+					!sidebar.contains(e.target as Node) && 
+					!sidebarToggle.contains(e.target as Node)) {
+					sidebar.classList.remove('open');
+				}
+
+				if (panel && btn && panel.classList.contains('activo')) {
+					const objetivo = e.target as Node;
+					if (!panel.contains(objetivo) && !btn.contains(objetivo)) {
+						cerrarPanelNotificaciones();
+					}
+				}
+			});
+
+			window.addEventListener('notificaciones:actualizadas', () => {
+				actualizarBadgeNotificaciones();
+				renderizarPanelNotificaciones();
+			});
+
+			// Añadir indicador de carga durante las transiciones
+			document.addEventListener('astro:before-swap', () => {
+				document.body.classList.add('is-transitioning');
+			});
+
+			document.addEventListener('astro:after-swap', () => {
+				document.body.classList.remove('is-transitioning');
+			});
+		</script>
 	</body>
 </html>
 
-<style>
-	html,
+<style is:global>
+	/* ============================================
+	   SISTEMA DE DISEÑO MODERNO - SOFTCONTROL CRM
+	   Compatible con: Chrome, Firefox, Safari, Edge
+	   ============================================ */
+
+	:root {
+		/* ============================================
+		   TEMA FUTURISTA NEÓN - SOFTCONTROL CRM
+		   ============================================ */
+		
+		/* Colores NEÓN principales */
+		--neon-cyan: #00fff2;
+		--neon-magenta: #ff00ff;
+		--neon-pink: #ff2d95;
+		--neon-green: #00ff88;
+		--neon-yellow: #ffff00;
+		--neon-blue: #00b4ff;
+		--neon-purple: #bf00ff;
+		
+		/* Colores primarios (cyan neón) */
+		--color-primary: #00fff2;
+		--color-primary-dark: #00d4d4;
+		--color-primary-light: #67fff9;
+		--color-secondary: #ff00ff;
+		--color-success: #00ff88;
+		--color-warning: #ffff00;
+		--color-danger: #ff2d95;
+		--color-info: #00b4ff;
+		
+		/* Fondos OSCUROS futuristas - Más profundos */
+		--color-bg: #050508;
+		--color-bg-alt: #08080c;
+		--color-bg-dark: #0c0c12;
+		--color-bg-card: rgba(10, 15, 25, 0.8);
+		--color-bg-glass: rgba(15, 20, 35, 0.7);
+		
+		/* Texto BRILLANTE para mejor legibilidad */
+		--color-text: #ffffff;
+		--color-text-light: #e2e8f0;
+		--color-text-muted: #94a3b8;
+		
+		/* Bordes con efecto neón */
+		--color-border: rgba(0, 255, 242, 0.15);
+		--color-border-dark: rgba(0, 255, 242, 0.25);
+		--color-border-glow: rgba(0, 255, 242, 0.4);
+		
+		/* Sombras NEÓN */
+		--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+		--shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+		--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+		--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+		--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+		--shadow-soft: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
+		
+		/* Glows neón */
+		--glow-cyan: 0 0 20px rgba(0, 255, 242, 0.4), 0 0 40px rgba(0, 255, 242, 0.2);
+		--glow-magenta: 0 0 20px rgba(255, 0, 255, 0.4), 0 0 40px rgba(255, 0, 255, 0.2);
+		--glow-green: 0 0 20px rgba(0, 255, 136, 0.4), 0 0 40px rgba(0, 255, 136, 0.2);
+		--glow-pink: 0 0 20px rgba(255, 45, 149, 0.4), 0 0 40px rgba(255, 45, 149, 0.2);
+		
+		/* Radios */
+		--radius: 0.5rem;
+		--radius-sm: 0.375rem;
+		--radius-lg: 0.75rem;
+		--radius-xl: 1rem;
+		--radius-2xl: 1.5rem;
+		
+		/* Transiciones suaves */
+		--transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		--transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+		
+		/* Sidebar */
+		--sidebar-width: 280px;
+		--sidebar-collapsed-width: 80px;
+		--header-height: 72px;
+	}
+
+	/* Reset universal con soporte cross-browser */
+	*,
+	*::before,
+	*::after {
+		-webkit-box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+
+	html {
+		font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		-webkit-text-size-adjust: 100%;
+		-ms-text-size-adjust: 100%;
+		scroll-behavior: smooth;
+		/* Fallback para navegadores que no soportan scroll-behavior */
+	}
+
+	/* Soporte para scroll suave en Safari */
+	@supports not (scroll-behavior: smooth) {
+		html {
+			scroll-behavior: auto;
+		}
+	}
+
 	body {
 		margin: 0;
+		/* Fondo futurista oscuro con gradiente y grid */
+		background: linear-gradient(135deg, #050508 0%, #0a0a15 50%, #050510 100%);
+		background-color: #050508; /* Fallback */
+		background-attachment: fixed;
+		position: relative;
+		color: var(--color-text);
+		color: #ffffff; /* Fallback */
+		line-height: 1.6;
+		/* Altura dinámica para móviles - dvh es mejor que vh en iOS Safari */
+		min-height: 100vh;
+		min-height: 100dvh;
+		/* Prevenir scroll horizontal en móviles */
+		overflow-x: hidden;
+		/* Prevenir problemas de texto en móviles */
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		-webkit-overflow-scrolling: touch;
+	}
+	
+	/* Grid futurista superpuesto */
+	body::before {
+		content: '';
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-image: 
+			linear-gradient(rgba(0, 255, 242, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(0, 255, 242, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		pointer-events: none;
+		z-index: 0;
+	}
+
+	/* Contenedor principal de la app */
+	.app-container {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		min-height: 100vh;
+		min-height: 100dvh;
+		width: 100%;
+		max-width: 100vw;
+		overflow-x: hidden;
+		position: relative;
+		z-index: 1;
+	}
+
+	/* ============================================
+	   SIDEBAR FUTURISTA NEÓN
+	   ============================================ */
+	.sidebar {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: var(--sidebar-width);
+		width: 280px; /* Fallback */
+		height: 100vh;
+		height: 100dvh; /* Dynamic viewport height para móviles */
+		/* Fondo glassmorphism oscuro */
+		background: linear-gradient(180deg, rgba(10, 10, 16, 0.95) 0%, rgba(14, 14, 22, 0.98) 100%);
+		background-color: #0a0a10; /* Fallback */
+		/* Borde derecho neón */
+		border-right: 1px solid rgba(0, 255, 242, 0.15);
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		-webkit-flex-direction: column;
+		-ms-flex-direction: column;
+		flex-direction: column;
+		z-index: 100;
+		-webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		-o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		-webkit-box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 255, 242, 0.03);
+		box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5), 0 0 60px rgba(0, 255, 242, 0.03);
+		-webkit-backdrop-filter: blur(20px);
+		backdrop-filter: blur(20px);
+	}
+
+	.sidebar-header {
+		padding: 1.5rem;
+		border-bottom: 1px solid rgba(0, 255, 242, 0.15);
+	}
+
+	.sidebar-header a {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		gap: 0.75rem;
+		/* Fallback para gap en Safari antiguo */
+		margin: 0 -0.375rem;
+		text-decoration: none;
+	}
+
+	.sidebar-header a > * {
+		margin: 0 0.375rem;
+	}
+
+	/* Soporte moderno de gap */
+	@supports (gap: 0.75rem) {
+		.sidebar-header a {
+			margin: 0;
+		}
+		.sidebar-header a > * {
+			margin: 0;
+		}
+	}
+
+	.logo-icon {
+		width: 42px;
+		height: 42px;
+		/* Gradiente neón cyan a magenta */
+		background: linear-gradient(135deg, #00fff2, #ff00ff);
+		background-color: #00fff2; /* Fallback */
+		border-radius: 12px;
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		-webkit-box-pack: center;
+		-webkit-justify-content: center;
+		-ms-flex-pack: center;
+		justify-content: center;
+		/* Glow neón */
+		-webkit-box-shadow: 0 0 20px rgba(0, 255, 242, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
+		box-shadow: 0 0 20px rgba(0, 255, 242, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
+		-webkit-flex-shrink: 0;
+		-ms-flex-negative: 0;
+		flex-shrink: 0;
+		/* Animación de respiración suave */
+		animation: glowBreathe 4s ease-in-out infinite;
+	}
+	
+	@keyframes glowBreathe {
+		0%, 100% { 
+			box-shadow: 0 0 20px rgba(0, 255, 242, 0.5), 0 0 40px rgba(255, 0, 255, 0.3);
+		}
+		50% { 
+			box-shadow: 0 0 30px rgba(0, 255, 242, 0.7), 0 0 60px rgba(255, 0, 255, 0.5);
+		}
+	}
+
+	.logo-text {
+		font-size: 1.375rem;
+		font-weight: 800;
+		/* Texto con gradiente neón */
+		background: linear-gradient(90deg, #00fff2, #ff00ff);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+		letter-spacing: -0.02em;
+		/* Glow de texto */
+		filter: drop-shadow(0 0 8px rgba(0, 255, 242, 0.5));
+	}
+
+	.sidebar-nav {
+		-webkit-box-flex: 1;
+		-webkit-flex: 1;
+		-ms-flex: 1;
+		flex: 1;
+		overflow-y: auto;
+		padding: 1rem 0;
+		/* Scroll suave en iOS */
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.nav-section {
+		padding: 0 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.nav-section-title {
+		display: block;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--neon-cyan);
+		opacity: 0.6;
+		padding: 0 0.75rem;
+		margin-bottom: 0.75rem;
+		text-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+	}
+
+	.nav-list {
+		list-style: none;
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		-webkit-flex-direction: column;
+		-ms-flex-direction: column;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	/* Fallback para gap en navegadores antiguos */
+	.nav-list > li + li {
+		margin-top: 0.25rem;
+	}
+
+	@supports (gap: 0.25rem) {
+		.nav-list > li + li {
+			margin-top: 0;
+		}
+	}
+
+	.nav-item {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		border-radius: 0.75rem;
+		color: rgba(255, 255, 255, 0.6);
+		text-decoration: none;
+		font-weight: 500;
+		font-size: 0.9375rem;
+		-webkit-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		-o-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+		overflow: hidden;
+		/* Borde sutil */
+		border: 1px solid transparent;
+	}
+
+	.nav-item::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
 		width: 100%;
 		height: 100%;
+		background: linear-gradient(90deg, rgba(0, 255, 242, 0.1), transparent);
+		opacity: 0;
+		transition: var(--transition);
+	}
+
+	.nav-item:hover {
+		color: var(--neon-cyan);
+		background: rgba(0, 255, 242, 0.08);
+		border-color: rgba(0, 255, 242, 0.2);
+		text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+	}
+
+	.nav-item:hover::before {
+		opacity: 1;
+	}
+
+	.nav-item.active {
+		color: var(--neon-cyan);
+		background: linear-gradient(90deg, rgba(0, 255, 242, 0.15), rgba(255, 0, 255, 0.08));
+		border-color: rgba(0, 255, 242, 0.3);
+		box-shadow: 0 0 20px rgba(0, 255, 242, 0.2), inset 0 0 20px rgba(0, 255, 242, 0.05);
+		text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+	}
+
+	.nav-item.active::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 3px;
+		height: 60%;
+		/* Barra lateral neón */
+		background: linear-gradient(180deg, var(--neon-cyan), var(--neon-magenta));
+		border-radius: 0 4px 4px 0;
+		box-shadow: 0 0 10px var(--neon-cyan);
+	}
+
+	.nav-item-accent {
+		background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 242, 0.1));
+		border: 1px dashed rgba(0, 255, 242, 0.3);
+	}
+
+	.nav-item-accent:hover {
+		background: linear-gradient(135deg, rgba(255, 0, 255, 0.2), rgba(0, 255, 242, 0.2));
+		border-color: var(--neon-cyan);
+		box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+	}
+
+	.nav-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		flex-shrink: 0;
+	}
+
+	.sidebar-footer {
+		padding: 1rem 1.5rem;
+		border-top: 1px solid rgba(0, 255, 242, 0.15);
+	}
+
+	.logout-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		width: 100%;
+		padding: 0.75rem 1rem;
+		background: rgba(255, 45, 149, 0.1);
+		border: 1px solid rgba(255, 45, 149, 0.3);
+		border-radius: var(--radius-lg);
+		color: var(--neon-pink);
+		font-weight: 500;
+		font-size: 0.9375rem;
+		cursor: pointer;
+		transition: var(--transition);
+	}
+
+	.logout-btn:hover {
+		background: rgba(255, 45, 149, 0.2);
+		border-color: var(--neon-pink);
+		color: var(--neon-pink);
+		box-shadow: 0 0 20px rgba(255, 45, 149, 0.3);
+		text-shadow: 0 0 10px rgba(255, 45, 149, 0.5);
+	}
+
+	/* ============================================
+	   CONTENIDO PRINCIPAL - Cross-browser compatible
+	   ============================================ */
+	.main-wrapper {
+		margin-left: var(--sidebar-width);
+		margin-left: 280px; /* Fallback */
+		/* Usar min-height con dvh para iOS Safari */
+		min-height: 100vh;
+		min-height: 100dvh;
+		/* Flex para que el contenido ocupe todo el espacio */
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		-webkit-flex-direction: column;
+		-ms-flex-direction: column;
+		flex-direction: column;
+		/* Ancho flexible */
+		width: calc(100% - var(--sidebar-width));
+		width: calc(100% - 280px); /* Fallback */
+		max-width: 100%;
+		overflow-x: hidden;
+		-webkit-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		-o-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	.main-header {
+		position: -webkit-sticky;
+		position: sticky;
+		top: 0;
+		height: var(--header-height);
+		height: 72px; /* Fallback */
+		/* Fondo glassmorphism oscuro */
+		background: rgba(10, 10, 16, 0.8);
+		background-color: rgba(10, 10, 16, 0.95); /* Fallback */
+		-webkit-backdrop-filter: blur(20px);
+		backdrop-filter: blur(20px);
+		/* Borde inferior neón sutil */
+		border-bottom: 1px solid rgba(0, 255, 242, 0.15);
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		-webkit-box-pack: justify;
+		-webkit-justify-content: space-between;
+		-ms-flex-pack: justify;
+		justify-content: space-between;
+		padding: 0 2rem;
+		z-index: 50;
+	}
+
+	/* Fallback para navegadores sin soporte de backdrop-filter */
+	@supports not ((-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px))) {
+		.main-header {
+			background-color: rgba(10, 10, 16, 0.98);
+		}
+	}
+
+	.header-left {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	.header-right {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.sidebar-toggle {
+		display: none;
+		padding: 0.5rem;
+		background: transparent;
+		border: none;
+		color: var(--color-text-light);
+		border-radius: var(--radius);
+		cursor: pointer;
+		transition: var(--transition);
+	}
+
+	.sidebar-toggle:hover {
+		background: var(--color-bg-dark);
+		color: var(--color-text);
+	}
+
+	/* Barra de búsqueda futurista */
+	.search-bar {
+		position: relative;
+		width: 400px;
+	}
+
+	.search-icon {
+		position: absolute;
+		left: 1rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 20px;
+		height: 20px;
+		color: var(--neon-cyan);
+		opacity: 0.6;
+		pointer-events: none;
+		transition: var(--transition);
+	}
+
+	.search-input {
+		width: 100%;
+		padding: 0.75rem 1rem 0.75rem 2.75rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(0, 255, 242, 0.2);
+		border-radius: var(--radius-xl);
+		font-size: 0.9375rem;
+		color: var(--color-text);
+		transition: var(--transition);
+	}
+
+	.search-input::placeholder {
+		color: var(--color-text-muted);
+	}
+
+	.search-input:focus {
+		outline: none;
+		background: rgba(0, 255, 242, 0.05);
+		border-color: var(--neon-cyan);
+		box-shadow: 0 0 20px rgba(0, 255, 242, 0.2), inset 0 0 20px rgba(0, 255, 242, 0.03);
+	}
+
+	.search-input:focus + .search-icon,
+	.search-bar:focus-within .search-icon {
+		opacity: 1;
+		filter: drop-shadow(0 0 5px var(--neon-cyan));
+	}
+
+	.search-shortcut {
+		position: absolute;
+		right: 1rem;
+		top: 50%;
+		transform: translateY(-50%);
+		padding: 0.25rem 0.5rem;
+		background: rgba(0, 255, 242, 0.1);
+		border: 1px solid rgba(0, 255, 242, 0.3);
+		border-radius: var(--radius-sm);
+		font-size: 0.75rem;
+		color: var(--neon-cyan);
+		font-family: inherit;
+	}
+
+	/* Botones del header futuristas */
+	.header-btn {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 42px;
+		height: 42px;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(0, 255, 242, 0.2);
+		border-radius: var(--radius-lg);
+		color: var(--color-text-light);
+		cursor: pointer;
+		transition: var(--transition);
+	}
+
+	.header-btn:hover {
+		background: rgba(0, 255, 242, 0.1);
+		border-color: var(--neon-cyan);
+		color: var(--neon-cyan);
+		box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+	}
+
+	.notification-badge {
+		position: absolute;
+		top: -4px;
+		right: -4px;
+		min-width: 18px;
+		height: 18px;
+		/* Gradiente neón magenta */
+		background: linear-gradient(135deg, var(--neon-magenta), var(--neon-pink));
+		border-radius: 9999px;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		color: white;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 4px;
+		box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+		animation: neonPulse 2s ease-in-out infinite;
+	}
+	
+	@keyframes neonPulse {
+		0%, 100% { 
+			box-shadow: 0 0 10px rgba(255, 0, 255, 0.4);
+		}
+		50% { 
+			box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+		}
+	}
+
+	/* Menú de usuario */
+	.user-menu {
+		position: relative;
+	}
+
+	.user-btn {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.375rem;
+		padding-right: 0.75rem;
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(0, 255, 242, 0.2);
+		border-radius: 9999px;
+		cursor: pointer;
+		transition: var(--transition);
+	}
+
+	.user-btn:hover {
+		background: rgba(0, 255, 242, 0.1);
+		border-color: var(--neon-cyan);
+		box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+	}
+
+	.user-avatar {
+		width: 34px;
+		height: 34px;
+		/* Gradiente neón cyan-magenta */
+		background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+		border-radius: 9999px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: #0a0a10;
+		box-shadow: 0 0 15px rgba(0, 255, 242, 0.4);
+	}
+
+	/* Contenido */
+	.main-content {
+		-webkit-box-flex: 1;
+		-webkit-flex: 1;
+		-ms-flex: 1;
+		flex: 1;
+		padding: 2rem;
+		/* Prevenir overflow en móviles */
+		max-width: 100%;
+		overflow-x: hidden;
+		/* Asegurar que el contenido no se desborde */
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		/* Nombre para View Transitions */
+		view-transition-name: main-content;
+	}
+
+	/* ============================================
+	   TIPOGRAFÍA FUTURISTA
+	   ============================================ */
+	h1, h2, h3, h4, h5, h6 {
+		font-weight: 700;
+		line-height: 1.2;
+		color: var(--color-text);
+		letter-spacing: -0.02em;
+	}
+
+	h1 { 
+		font-size: 2.25rem;
+		/* Efecto glow sutil en títulos principales */
+		text-shadow: 0 0 30px rgba(0, 255, 242, 0.1);
+	}
+	h2 { font-size: 1.875rem; }
+	h3 { font-size: 1.5rem; }
+	h4 { font-size: 1.25rem; }
+
+	a {
+		color: var(--neon-cyan);
+		text-decoration: none;
+		transition: var(--transition);
+	}
+
+	a:hover {
+		color: var(--neon-cyan);
+		text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+	}
+
+	button {
+		font-family: inherit;
+		cursor: pointer;
+	}
+
+	/* ============================================
+	   BOTONES FUTURISTAS NEÓN
+	   ============================================ */
+	.btn-primary,
+	.btn-secondary,
+	.btn-success,
+	.btn-danger {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		padding: 0.75rem 1.5rem;
+		border: 1px solid transparent;
+		border-radius: var(--radius-lg);
+		font-weight: 600;
+		font-size: 0.9375rem;
+		transition: var(--transition);
+		text-decoration: none;
+		cursor: pointer;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.btn-primary {
+		/* Botón neón cyan */
+		background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(0, 180, 255, 0.2));
+		border: 1px solid var(--neon-cyan);
+		color: var(--neon-cyan);
+		box-shadow: 0 0 20px rgba(0, 255, 242, 0.3), inset 0 0 20px rgba(0, 255, 242, 0.1);
+	}
+
+	.btn-primary:hover {
+		transform: translateY(-2px);
+		background: linear-gradient(135deg, rgba(0, 255, 242, 0.3), rgba(0, 180, 255, 0.3));
+		box-shadow: 0 0 30px rgba(0, 255, 242, 0.5), inset 0 0 30px rgba(0, 255, 242, 0.15);
+		color: var(--neon-cyan);
+		text-shadow: 0 0 10px rgba(0, 255, 242, 0.5);
+	}
+
+	.btn-primary:active {
+		transform: translateY(0);
+	}
+
+	.btn-secondary {
+		/* Botón outline neón */
+		background: rgba(255, 255, 255, 0.03);
+		color: var(--color-text);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.btn-secondary:hover {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(0, 255, 242, 0.4);
+		color: var(--neon-cyan);
+		transform: translateY(-1px);
+		box-shadow: 0 0 15px rgba(0, 255, 242, 0.2);
+	}
+
+	.btn-success {
+		/* Botón neón verde */
+		background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 201, 106, 0.2));
+		border: 1px solid var(--neon-green);
+		color: var(--neon-green);
+		box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 20px rgba(0, 255, 136, 0.1);
+	}
+
+	.btn-success:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), inset 0 0 30px rgba(0, 255, 136, 0.15);
+		color: var(--neon-green);
+		text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+	}
+
+	.btn-danger {
+		/* Botón neón rosa/magenta */
+		background: linear-gradient(135deg, rgba(255, 45, 149, 0.2), rgba(255, 0, 255, 0.2));
+		border: 1px solid var(--neon-pink);
+		color: var(--neon-pink);
+		box-shadow: 0 0 20px rgba(255, 45, 149, 0.3), inset 0 0 20px rgba(255, 45, 149, 0.1);
+	}
+
+	.btn-danger:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 0 30px rgba(255, 45, 149, 0.5), inset 0 0 30px rgba(255, 45, 149, 0.15);
+		color: var(--neon-pink);
+		text-shadow: 0 0 10px rgba(255, 45, 149, 0.5);
+	}
+
+	/* ============================================
+	   FORMULARIOS FUTURISTAS
+	   ============================================ */
+	.form-input,
+	.form-select,
+	.form-textarea {
+		width: 100%;
+		padding: 0.875rem 1rem;
+		border: 1px solid rgba(0, 255, 242, 0.2);
+		border-radius: var(--radius-lg);
+		font-size: 0.9375rem;
+		transition: var(--transition);
+		background: rgba(255, 255, 255, 0.03);
+		color: var(--color-text);
+	}
+
+	.form-input:focus,
+	.form-select:focus,
+	.form-textarea:focus {
+		outline: none;
+		border-color: var(--neon-cyan);
+		background: rgba(0, 255, 242, 0.05);
+		box-shadow: 0 0 20px rgba(0, 255, 242, 0.2), inset 0 0 20px rgba(0, 255, 242, 0.03);
+	}
+
+	.form-input::placeholder {
+		color: var(--color-text-muted);
+	}
+
+	label {
+		display: block;
+		margin-bottom: 0.5rem;
+		font-weight: 500;
+		font-size: 0.9375rem;
+		color: var(--color-text-light);
+	}
+
+	label.required::after {
+		content: ' *';
+		color: var(--neon-pink);
+	}
+
+	/* ============================================
+	   CARDS FUTURISTAS GLASSMORPHISM
+	   ============================================ */
+	.card {
+		/* Glassmorphism oscuro */
+		background: rgba(255, 255, 255, 0.03);
+		border: 1px solid rgba(0, 255, 242, 0.15);
+		border-radius: var(--radius-xl);
+		padding: 1.5rem;
+		box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+		transition: var(--transition);
+	}
+
+	.card:hover {
+		border-color: rgba(0, 255, 242, 0.3);
+		box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 255, 242, 0.1);
+		transform: translateY(-2px);
+	}
+
+	/* ============================================
+	   BADGES NEÓN
+	   ============================================ */
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.375rem 0.875rem;
+		border-radius: 9999px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		border: 1px solid transparent;
+	}
+
+	.badge-success {
+		background: rgba(0, 255, 136, 0.15);
+		border-color: rgba(0, 255, 136, 0.4);
+		color: var(--neon-green);
+		box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+	}
+
+	.badge-warning {
+		background: rgba(255, 255, 0, 0.15);
+		border-color: rgba(255, 255, 0, 0.4);
+		color: var(--neon-yellow);
+		box-shadow: 0 0 10px rgba(255, 255, 0, 0.2);
+	}
+
+	.badge-danger {
+		background: rgba(255, 45, 149, 0.15);
+		border-color: rgba(255, 45, 149, 0.4);
+		color: var(--neon-pink);
+		box-shadow: 0 0 10px rgba(255, 45, 149, 0.2);
+	}
+
+	.badge-info {
+		background: rgba(0, 180, 255, 0.15);
+		border-color: rgba(0, 180, 255, 0.4);
+		color: var(--neon-blue);
+		box-shadow: 0 0 10px rgba(0, 180, 255, 0.2);
+	}
+
+	/* ============================================
+	   TABLAS FUTURISTAS
+	   ============================================ */
+	.table-container {
+		background: rgba(255, 255, 255, 0.02);
+		border: 1px solid rgba(0, 255, 242, 0.15);
+		border-radius: var(--radius-xl);
+		overflow: hidden;
+		box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	thead {
+		background: rgba(0, 255, 242, 0.05);
+		border-bottom: 1px solid rgba(0, 255, 242, 0.2);
+	}
+
+	th {
+		padding: 1rem 1.5rem;
+		text-align: left;
+		font-weight: 600;
+		font-size: 0.8125rem;
+		color: var(--neon-cyan);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+	}
+
+	td {
+		padding: 1rem 1.5rem;
+		border-bottom: 1px solid rgba(0, 255, 242, 0.1);
+		font-size: 0.9375rem;
+		color: #ffffff;
+	}
+	
+	td .text-muted, td small {
+		color: #cbd5e1;
+	}
+
+	tr:last-child td {
+		border-bottom: none;
+	}
+
+	tbody tr {
+		transition: var(--transition);
+	}
+
+	tbody tr:hover {
+		background: rgba(0, 255, 242, 0.05);
+	}
+
+	/* ============================================
+	   ALERTAS FUTURISTAS
+	   ============================================ */
+	.alert {
+		padding: 1rem 1.25rem;
+		border-radius: var(--radius-lg);
+		margin-bottom: 1rem;
+		font-size: 0.9375rem;
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
+	.alert-success {
+		background: rgba(0, 255, 136, 0.1);
+		color: var(--neon-green);
+		border: 1px solid rgba(0, 255, 136, 0.4);
+		box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+	}
+
+	.alert-error {
+		background: rgba(255, 45, 149, 0.1);
+		color: var(--neon-pink);
+		border: 1px solid rgba(255, 45, 149, 0.4);
+		box-shadow: 0 0 20px rgba(255, 45, 149, 0.15);
+	}
+
+	.alert-info {
+		background: rgba(0, 180, 255, 0.1);
+		color: var(--neon-blue);
+		border: 1px solid rgba(0, 180, 255, 0.4);
+		box-shadow: 0 0 20px rgba(0, 180, 255, 0.15);
+	}
+
+	/* ============================================
+	   SPINNER NEÓN
+	   ============================================ */
+	.spinner {
+		display: inline-block;
+		width: 1.25rem;
+		height: 1.25rem;
+		border: 2px solid rgba(0, 255, 242, 0.2);
+		border-top-color: var(--neon-cyan);
+		border-radius: 50%;
+		animation: spin 0.6s linear infinite;
+		box-shadow: 0 0 10px rgba(0, 255, 242, 0.3);
+	}
+
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+
+	/* ============================================
+	   RESPONSIVE - Cross-browser compatible
+	   ============================================ */
+	@media (max-width: 1024px) {
+		.sidebar {
+			-webkit-transform: translateX(-100%);
+			-ms-transform: translateX(-100%);
+			transform: translateX(-100%);
+		}
+
+		.sidebar.open {
+			-webkit-transform: translateX(0);
+			-ms-transform: translateX(0);
+			transform: translateX(0);
+		}
+
+		.main-wrapper {
+			margin-left: 0;
+			width: 100%;
+		}
+
+		.sidebar-toggle {
+			display: -webkit-box;
+			display: -webkit-flex;
+			display: -ms-flexbox;
+			display: flex;
+		}
+
+		.search-bar {
+			width: 280px;
+			max-width: calc(100vw - 200px);
+		}
+
+		.search-shortcut {
+			display: none;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.main-header {
+			padding: 0 1rem;
+			/* Altura fija para evitar saltos */
+			height: 60px;
+			min-height: 60px;
+		}
+
+		.main-content {
+			padding: 1rem;
+			/* Padding inferior extra para evitar que el contenido quede bajo la barra de navegación del móvil */
+			padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+		}
+
+		.search-bar {
+			display: none;
+		}
+
+		h1 { 
+			font-size: 1.75rem; 
+			/* Evitar desbordamiento de texto */
+			word-break: break-word;
+		}
+		h2 { font-size: 1.5rem; }
+		h3 { font-size: 1.25rem; }
+	}
+
+	/* Soporte específico para Safari iOS */
+	@supports (-webkit-touch-callout: none) {
+		body {
+			/* Altura que respeta la barra de direcciones de Safari */
+			min-height: -webkit-fill-available;
+		}
+		
+		.app-container {
+			min-height: -webkit-fill-available;
+		}
+		
+		.sidebar {
+			height: -webkit-fill-available;
+		}
+	}
+
+	/* ============================================
+	   SOPORTE PARA PANTALLAS TÁCTILES
+	   ============================================ */
+	@media (hover: none) and (pointer: coarse) {
+		/* Aumentar áreas táctiles en dispositivos touch */
+		.nav-item {
+			padding: 1rem 1rem;
+			min-height: 48px;
+		}
+
+		.header-btn {
+			min-width: 48px;
+			min-height: 48px;
+		}
+
+		.btn-primary,
+		.btn-secondary,
+		.btn-success,
+		.btn-danger {
+			min-height: 48px;
+			padding: 0.875rem 1.5rem;
+		}
+
+		/* Deshabilitar efectos hover en touch */
+		.nav-item:hover::before {
+			opacity: 0;
+		}
+
+		.stat-card:hover {
+			-webkit-transform: none;
+			-ms-transform: none;
+			transform: none;
+		}
+	}
+
+	/* ============================================
+	   SOPORTE PARA MODO OSCURO DEL SISTEMA
+	   ============================================ */
+	@media (prefers-color-scheme: dark) {
+		/* Preparado para futuro modo oscuro */
+	}
+
+	/* ============================================
+	   REDUCCIÓN DE MOVIMIENTO PARA ACCESIBILIDAD
+	   ============================================ */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			-webkit-animation-duration: 0.01ms !important;
+			animation-duration: 0.01ms !important;
+			-webkit-animation-iteration-count: 1 !important;
+			animation-iteration-count: 1 !important;
+			-webkit-transition-duration: 0.01ms !important;
+			-o-transition-duration: 0.01ms !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
+
+	/* ============================================
+	   UTILIDADES CROSS-BROWSER
+	   ============================================ */
+	.flex {
+		display: -webkit-box;
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+	}
+
+	.items-center {
+		-webkit-box-align: center;
+		-webkit-align-items: center;
+		-ms-flex-align: center;
+		align-items: center;
+	}
+
+	.justify-center {
+		-webkit-box-pack: center;
+		-webkit-justify-content: center;
+		-ms-flex-pack: center;
+		justify-content: center;
+	}
+
+	.justify-between {
+		-webkit-box-pack: justify;
+		-webkit-justify-content: space-between;
+		-ms-flex-pack: justify;
+		justify-content: space-between;
+	}
+
+	.flex-col {
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		-webkit-flex-direction: column;
+		-ms-flex-direction: column;
+		flex-direction: column;
+	}
+
+	.flex-1 {
+		-webkit-box-flex: 1;
+		-webkit-flex: 1;
+		-ms-flex: 1;
+		flex: 1;
+	}
+
+	.min-h-screen {
+		min-height: 100vh;
+		min-height: 100dvh; /* Dynamic viewport height */
+	}
+
+	/* Ocultar elementos visualmente pero mantener accesibilidad */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	/* ============================================
+	   VIEW TRANSITIONS - Animaciones de navegación
+	   ============================================ */
+	
+	/* Animación de fade personalizada para el contenido */
+	@-webkit-keyframes fadeIn {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(8px);
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(8px);
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+	}
+
+	@-webkit-keyframes fadeOut {
+		from {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+		to {
+			opacity: 0;
+			-webkit-transform: translateY(-8px);
+			transform: translateY(-8px);
+		}
+	}
+
+	@keyframes fadeOut {
+		from {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+		to {
+			opacity: 0;
+			-webkit-transform: translateY(-8px);
+			transform: translateY(-8px);
+		}
+	}
+
+	/* Transiciones de View Transitions API */
+	::view-transition-old(root) {
+		-webkit-animation: fadeOut 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: fadeOut 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	::view-transition-new(root) {
+		-webkit-animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+	}
+
+	/* Animación específica para el contenido principal */
+	.main-content {
+		-webkit-animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+		animation: fadeIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	/* Animación de entrada para cards y elementos */
+	@-webkit-keyframes slideUp {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(20px);
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes slideUp {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(20px);
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(0);
+			transform: translateY(0);
+		}
+	}
+
+	/* Clase para animar elementos al cargar - LENTO para apreciar mejor */
+	.animate-in {
+		-webkit-animation: slideUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		animation: slideUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+		opacity: 0;
+	}
+
+	/* Delays escalonados para animaciones en secuencia - más separados */
+	.animate-delay-1 { -webkit-animation-delay: 0.4s; animation-delay: 0.4s; }
+	.animate-delay-2 { -webkit-animation-delay: 0.8s; animation-delay: 0.8s; }
+	.animate-delay-3 { -webkit-animation-delay: 1.2s; animation-delay: 1.2s; }
+	.animate-delay-4 { -webkit-animation-delay: 1.6s; animation-delay: 1.6s; }
+	.animate-delay-5 { -webkit-animation-delay: 2.0s; animation-delay: 2.0s; }
+
+	/* Transición suave para el indicador activo del menú */
+	.nav-item.active::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 50%;
+		-webkit-transform: translateY(-50%);
+		-ms-transform: translateY(-50%);
+		transform: translateY(-50%);
+		width: 3px;
+		height: 60%;
+		background: linear-gradient(180deg, #818cf8, #6366f1);
+		border-radius: 0 4px 4px 0;
+		-webkit-animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	@-webkit-keyframes slideInLeft {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(-50%) translateX(-100%);
+			transform: translateY(-50%) translateX(-100%);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(-50%) translateX(0);
+			transform: translateY(-50%) translateX(0);
+		}
+	}
+
+	@keyframes slideInLeft {
+		from {
+			opacity: 0;
+			-webkit-transform: translateY(-50%) translateX(-100%);
+			transform: translateY(-50%) translateX(-100%);
+		}
+		to {
+			opacity: 1;
+			-webkit-transform: translateY(-50%) translateX(0);
+			transform: translateY(-50%) translateX(0);
+		}
+	}
+
+	/* Respetar preferencias de reducción de movimiento */
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-old(root),
+		::view-transition-new(root),
+		.main-content,
+		.animate-in,
+		.nav-item.active::after {
+			-webkit-animation: none !important;
+			animation: none !important;
+		}
+
+		.animate-in {
+			opacity: 1 !important;
+		}
+	}
+
+	/* Estado de transición - indicador visual sutil */
+	body.is-transitioning .main-content {
+		pointer-events: none;
+	}
+
+	/* Animación de loading para transiciones largas */
+	@-webkit-keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	@keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	/* Skeleton loader NEÓN para contenido en carga */
+	.skeleton {
+		background: linear-gradient(
+			90deg,
+			rgba(0, 255, 242, 0.05) 25%,
+			rgba(0, 255, 242, 0.1) 50%,
+			rgba(0, 255, 242, 0.05) 75%
+		);
+		background-size: 200% 100%;
+		-webkit-animation: shimmer 1.5s infinite;
+		animation: shimmer 1.5s infinite;
+		border-radius: 8px;
+		border: 1px solid rgba(0, 255, 242, 0.1);
+	}
+
+	/* Transición suave para cambios de estado en elementos interactivos */
+	a, button, input, select, textarea {
+		-webkit-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		-o-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	/* Evitar flash de contenido sin estilo durante transiciones */
+	[data-astro-transition-fallback="animate"] {
+		-webkit-animation: none !important;
+		animation: none !important;
 	}
 </style>
