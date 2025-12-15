@@ -186,13 +186,10 @@ const menuItems = adminAutenticado
 								</svg>
 							</button>
 							
-							<!-- Barra de búsqueda -->
-							<div class="search-bar">
-								<svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-								</svg>
-								<input type="text" placeholder="Buscar clientes, productos, licencias..." class="search-input" />
-								<kbd class="search-shortcut">⌘K</kbd>
+							<!-- Status badge -->
+							<div class="header-status">
+								<div class="status-dot"></div>
+								<span class="status-text">Sistema operativo</span>
 							</div>
 						</div>
 
@@ -454,14 +451,8 @@ const menuItems = adminAutenticado
 				initializeEventListeners();
 			});
 
-			// Atajo de teclado para búsqueda (solo se registra una vez)
+			// Atajo de teclado para cerrar panel de notificaciones
 			document.addEventListener('keydown', (e) => {
-				if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-					e.preventDefault();
-					const searchInput = document.querySelector('.search-input');
-					if (searchInput instanceof HTMLInputElement) searchInput.focus();
-				}
-
 				if (e.key === 'Escape') {
 					cerrarPanelNotificaciones();
 				}
@@ -1061,65 +1052,49 @@ const menuItems = adminAutenticado
 		color: var(--color-text);
 	}
 
-	/* Barra de búsqueda futurista */
-	.search-bar {
-		position: relative;
-		width: 400px;
-	}
-
-	.search-icon {
-		position: absolute;
-		left: 1rem;
-		top: 50%;
-		transform: translateY(-50%);
-		width: 20px;
-		height: 20px;
-		color: var(--neon-cyan);
-		opacity: 0.6;
-		pointer-events: none;
-		transition: var(--transition);
-	}
-
-	.search-input {
-		width: 100%;
-		padding: 0.75rem 1rem 0.75rem 2.75rem;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(0, 255, 242, 0.2);
+	/* Status badge futurista */
+	.header-status {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.5rem 1rem;
+		background: rgba(0, 255, 136, 0.08);
+		border: 1px solid rgba(0, 255, 136, 0.25);
 		border-radius: var(--radius-xl);
-		font-size: 0.9375rem;
-		color: var(--color-text);
 		transition: var(--transition);
 	}
 
-	.search-input::placeholder {
-		color: var(--color-text-muted);
+	.header-status:hover {
+		background: rgba(0, 255, 136, 0.12);
+		border-color: rgba(0, 255, 136, 0.4);
+		box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
 	}
 
-	.search-input:focus {
-		outline: none;
-		background: rgba(0, 255, 242, 0.05);
-		border-color: var(--neon-cyan);
-		box-shadow: 0 0 20px rgba(0, 255, 242, 0.2), inset 0 0 20px rgba(0, 255, 242, 0.03);
+	.status-dot {
+		width: 8px;
+		height: 8px;
+		background: var(--neon-green);
+		border-radius: 50%;
+		box-shadow: 0 0 8px var(--neon-green), 0 0 16px var(--neon-green);
+		animation: statusPulse 2s ease-in-out infinite;
 	}
 
-	.search-input:focus + .search-icon,
-	.search-bar:focus-within .search-icon {
-		opacity: 1;
-		filter: drop-shadow(0 0 5px var(--neon-cyan));
+	@keyframes statusPulse {
+		0%, 100% {
+			opacity: 1;
+			box-shadow: 0 0 8px var(--neon-green), 0 0 16px var(--neon-green);
+		}
+		50% {
+			opacity: 0.7;
+			box-shadow: 0 0 4px var(--neon-green), 0 0 8px var(--neon-green);
+		}
 	}
 
-	.search-shortcut {
-		position: absolute;
-		right: 1rem;
-		top: 50%;
-		transform: translateY(-50%);
-		padding: 0.25rem 0.5rem;
-		background: rgba(0, 255, 242, 0.1);
-		border: 1px solid rgba(0, 255, 242, 0.3);
-		border-radius: var(--radius-sm);
-		font-size: 0.75rem;
-		color: var(--neon-cyan);
-		font-family: inherit;
+	.status-text {
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--neon-green);
+		letter-spacing: 0.02em;
 	}
 
 	/* Botones del header futuristas */
@@ -1596,13 +1571,12 @@ const menuItems = adminAutenticado
 			display: flex;
 		}
 
-		.search-bar {
-			width: 280px;
-			max-width: calc(100vw - 200px);
+		.header-status {
+			padding: 0.4rem 0.75rem;
 		}
 
-		.search-shortcut {
-			display: none;
+		.status-text {
+			font-size: 0.75rem;
 		}
 	}
 
@@ -1620,7 +1594,7 @@ const menuItems = adminAutenticado
 			padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 		}
 
-		.search-bar {
+		.header-status {
 			display: none;
 		}
 
