@@ -1,0 +1,576 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Planes y Precios - SoftControl CRM" showNav={false}>
+  <div class="pricing-container">
+    <div class="pricing-header">
+      <a href="/dashboard" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span>Volver al Dashboard</span>
+      </a>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="logo-text">SoftControl</span>
+      </div>
+    </div>
+
+    <div class="pricing-content">
+      <div class="pricing-intro">
+        <h1>Elige tu plan perfecto</h1>
+        <p>Potencia tu negocio con las herramientas que necesitas</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Plan Mensual -->
+        <div class="pricing-card">
+          <div class="card-header">
+            <div class="plan-icon monthly">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h2>Mensual</h2>
+            <p class="plan-description">Flexibilidad total, cancela cuando quieras</p>
+          </div>
+          <div class="card-price">
+            <span class="currency">€</span>
+            <span class="amount">9</span>
+            <span class="cents">,99</span>
+            <span class="period">/mes</span>
+          </div>
+          <ul class="features-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Gestión ilimitada de clientes</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Control de licencias</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Reportes básicos</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Soporte por email</span>
+            </li>
+          </ul>
+          <a href="https://buy.stripe.com/test_9B6cMY6Oz9rqbYTcco08g00" class="btn-subscribe monthly" target="_blank" rel="noopener">
+            <span>Suscribirse</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </a>
+        </div>
+
+        <!-- Plan Anual - Destacado -->
+        <div class="pricing-card featured">
+          <div class="popular-badge">Más popular</div>
+          <div class="card-header">
+            <div class="plan-icon annual">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <h2>Anual</h2>
+            <p class="plan-description">Ahorra 2 meses con el plan anual</p>
+          </div>
+          <div class="card-price">
+            <span class="currency">€</span>
+            <span class="amount">99</span>
+            <span class="cents">,99</span>
+            <span class="period">/año</span>
+          </div>
+          <div class="savings-badge">Ahorras €19,89</div>
+          <ul class="features-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Todo del plan mensual</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Reportes avanzados</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Integraciones premium</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Soporte prioritario</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Exportación de datos</span>
+            </li>
+          </ul>
+          <a href="https://buy.stripe.com/test_5kQ14g1uf476fb51xK08g02" class="btn-subscribe annual" target="_blank" rel="noopener">
+            <span>Suscribirse Anual</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </a>
+        </div>
+
+        <!-- Licencia Definitiva -->
+        <div class="pricing-card lifetime">
+          <div class="lifetime-badge">Pago único</div>
+          <div class="card-header">
+            <div class="plan-icon lifetime">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h2>Definitiva</h2>
+            <p class="plan-description">Una vez y para siempre</p>
+          </div>
+          <div class="card-price">
+            <span class="currency">€</span>
+            <span class="amount">199</span>
+            <span class="cents">,99</span>
+            <span class="period">único</span>
+          </div>
+          <ul class="features-list">
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Acceso de por vida</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Todas las funciones</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Actualizaciones incluidas</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Sin pagos recurrentes</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              <span>Soporte VIP</span>
+            </li>
+          </ul>
+          <a href="https://buy.stripe.com/test_eVq14g7SD7ji6EzgsE08g01" class="btn-subscribe lifetime" target="_blank" rel="noopener">
+            <span>Comprar Ahora</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="pricing-footer">
+        <div class="secure-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          <span>Pago seguro con Stripe</span>
+        </div>
+        <p class="guarantee">30 días de garantía de devolución del dinero</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .pricing-container {
+    min-height: 100vh;
+    background: #05060b;
+    background-image:
+      linear-gradient(rgba(0, 255, 242, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 242, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .pricing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0, 255, 242, 0.1);
+  }
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+
+  .back-link:hover {
+    color: #00fff2;
+  }
+
+  .back-link svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #00fff2, #ff00ff);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.4);
+  }
+
+  .logo-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00fff2, #ff00ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .pricing-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .pricing-intro {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .pricing-intro h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 30px rgba(0, 255, 242, 0.3);
+  }
+
+  .pricing-intro p {
+    font-size: 1.125rem;
+    color: #94a3b8;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .pricing-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 255, 242, 0.15);
+    border-radius: 20px;
+    padding: 2rem;
+    transition: all 0.3s;
+  }
+
+  .pricing-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 255, 242, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 255, 242, 0.1);
+  }
+
+  .pricing-card.featured {
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.08), rgba(255, 0, 255, 0.05));
+    border-color: rgba(0, 255, 242, 0.3);
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(0, 255, 242, 0.15);
+  }
+
+  .pricing-card.featured:hover {
+    transform: scale(1.05) translateY(-5px);
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #00fff2, #ff00ff);
+    color: #000;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .lifetime-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #bf00ff, #ff00ff);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .plan-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 1rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .plan-icon.monthly {
+    background: rgba(0, 180, 255, 0.15);
+    border: 1px solid rgba(0, 180, 255, 0.3);
+    color: #00b4ff;
+  }
+
+  .plan-icon.annual {
+    background: rgba(0, 255, 242, 0.15);
+    border: 1px solid rgba(0, 255, 242, 0.3);
+    color: #00fff2;
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.2);
+  }
+
+  .plan-icon.lifetime {
+    background: rgba(191, 0, 255, 0.15);
+    border: 1px solid rgba(191, 0, 255, 0.3);
+    color: #bf00ff;
+  }
+
+  .plan-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .card-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  .plan-description {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+
+  .card-price {
+    text-align: center;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.1rem;
+  }
+
+  .currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .amount {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+  }
+
+  .cents {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+  }
+
+  .period {
+    font-size: 1rem;
+    color: #64748b;
+    margin-left: 0.25rem;
+  }
+
+  .savings-badge {
+    text-align: center;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+  }
+
+  .features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+  }
+
+  .features-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+  }
+
+  .features-list li svg {
+    width: 18px;
+    height: 18px;
+    color: #00ff88;
+    flex-shrink: 0;
+  }
+
+  .btn-subscribe {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .btn-subscribe svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s;
+  }
+
+  .btn-subscribe:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-subscribe.monthly {
+    background: rgba(0, 180, 255, 0.1);
+    border: 1px solid rgba(0, 180, 255, 0.4);
+    color: #00b4ff;
+  }
+
+  .btn-subscribe.monthly:hover {
+    background: rgba(0, 180, 255, 0.2);
+    box-shadow: 0 0 25px rgba(0, 180, 255, 0.3);
+  }
+
+  .btn-subscribe.annual {
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.2), rgba(255, 0, 255, 0.15));
+    border: 1px solid #00fff2;
+    color: #00fff2;
+    box-shadow: 0 0 20px rgba(0, 255, 242, 0.3);
+  }
+
+  .btn-subscribe.annual:hover {
+    background: linear-gradient(135deg, rgba(0, 255, 242, 0.3), rgba(255, 0, 255, 0.25));
+    box-shadow: 0 0 35px rgba(0, 255, 242, 0.5);
+  }
+
+  .btn-subscribe.lifetime {
+    background: rgba(191, 0, 255, 0.15);
+    border: 1px solid rgba(191, 0, 255, 0.5);
+    color: #bf00ff;
+  }
+
+  .btn-subscribe.lifetime:hover {
+    background: rgba(191, 0, 255, 0.25);
+    box-shadow: 0 0 25px rgba(191, 0, 255, 0.3);
+  }
+
+  .pricing-footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 255, 242, 0.1);
+  }
+
+  .secure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 255, 136, 0.08);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    padding: 0.6rem 1.25rem;
+    border-radius: 25px;
+    color: #00ff88;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+
+  .secure-badge svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .guarantee {
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 1024px) {
+    .pricing-grid {
+      grid-template-columns: 1fr;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .pricing-card.featured {
+      transform: none;
+      order: -1;
+    }
+
+    .pricing-card.featured:hover {
+      transform: translateY(-5px);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pricing-header {
+      padding: 1rem;
+    }
+
+    .pricing-content {
+      padding: 2rem 1rem;
+    }
+
+    .pricing-intro h1 {
+      font-size: 1.75rem;
+    }
+
+    .amount {
+      font-size: 2.5rem;
+    }
+  }
+</style>

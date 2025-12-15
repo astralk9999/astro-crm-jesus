@@ -159,6 +159,16 @@ const menuItems = adminAutenticado
 										<span class="nav-label">Nuevo Cliente</span>
 									</a>
 								</li>
+								<li>
+									<a href="/pricing" class="nav-item nav-item-pricing">
+										<span class="nav-icon">
+											<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+											</svg>
+										</span>
+										<span class="nav-label">Planes y Precios</span>
+									</a>
+								</li>
 							</ul>
 						</div>
 					</nav>
@@ -907,6 +917,18 @@ const menuItems = adminAutenticado
 		background: linear-gradient(135deg, rgba(255, 0, 255, 0.2), rgba(0, 255, 242, 0.2));
 		border-color: var(--neon-cyan);
 		box-shadow: 0 0 15px rgba(0, 255, 242, 0.3);
+	}
+
+	.nav-item-pricing {
+		background: linear-gradient(135deg, rgba(0, 255, 136, 0.08), rgba(0, 180, 255, 0.08));
+		border: 1px solid rgba(0, 255, 136, 0.25);
+	}
+
+	.nav-item-pricing:hover {
+		background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 180, 255, 0.15));
+		border-color: var(--neon-green);
+		box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+		color: var(--neon-green);
 	}
 
 	.nav-icon {
