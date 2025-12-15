@@ -93,6 +93,12 @@ import Layout from '../layouts/Layout.astro';
     }
   }
 
+  const STRIPE_LINKS: Record<string, string> = {
+    monthly: 'https://buy.stripe.com/test_9B6cMY6Oz9rqbYTcco08g00',
+    annual: 'https://buy.stripe.com/test_5kQ14g1uf476fb51xK08g02',
+    lifetime: 'https://buy.stripe.com/test_eVq14g7SD7ji6EzgsE08g01',
+  };
+
   function renderSubscriptions(subscriptions: Subscription[]) {
     const list = document.getElementById('subscriptions-list');
     if (!list) return;
@@ -126,11 +132,46 @@ import Layout from '../layouts/Layout.astro';
         </div>
         ${sub.status === 'pending' ? `
         <div class="card-actions">
-          <a href="/pricing" class="btn-pay">Completar pago</a>
+          <a href="${STRIPE_LINKS[sub.plan_type] || '/pricing'}" target="_blank" class="btn-pay">Ir a pagar en Stripe</a>
+          <button class="btn-confirm-paid" data-id="${sub.id}">Ya he pagado ✓</button>
         </div>
         ` : ''}
       </div>
     `).join('');
+
+    // Event listeners para confirmar pago manual
+    document.querySelectorAll('.btn-confirm-paid').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const target = e.currentTarget as HTMLElement;
+        const subId = target.dataset.id;
+        if (subId && confirm('¿Confirmas que ya has completado el pago en Stripe?')) {
+          await markAsPaid(subId);
+        }
+      });
+    });
+  }
+
+  async function markAsPaid(subscriptionId: string) {
+    try {
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({ 
+          status: 'paid', 
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', subscriptionId);
+
+      if (error) {
+        alert('Error al actualizar: ' + error.message);
+      } else {
+        alert('¡Pago confirmado! Recargando...');
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Error al confirmar el pago');
+    }
   }
 
   function getStatusText(status: string): string {
@@ -370,13 +411,17 @@ import Layout from '../layouts/Layout.astro';
     padding: 1rem 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     background: rgba(255, 200, 0, 0.05);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .btn-pay {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    flex: 1;
+    min-width: 150px;
     padding: 0.75rem;
     background: rgba(255, 200, 0, 0.15);
     border: 1px solid rgba(255, 200, 0, 0.4);
@@ -390,6 +435,27 @@ import Layout from '../layouts/Layout.astro';
   .btn-pay:hover {
     background: rgba(255, 200, 0, 0.25);
     box-shadow: 0 0 20px rgba(255, 200, 0, 0.2);
+  }
+
+  .btn-confirm-paid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-width: 150px;
+    padding: 0.75rem;
+    background: rgba(0, 255, 136, 0.15);
+    border: 1px solid rgba(0, 255, 136, 0.4);
+    border-radius: 8px;
+    color: #00ff88;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-confirm-paid:hover {
+    background: rgba(0, 255, 136, 0.25);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
   }
 
   @media (max-width: 640px) {
