@@ -226,25 +226,39 @@ import Layout from '../layouts/Layout.astro';
     }
 
     async function createSubscriptionAndRedirect(email: string, planType: string, stripeLink: string, userId?: string) {
-      try {
-        // Crear suscripción pendiente en la base de datos
-        const response = await fetch('/api/subscriptions/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, planType, userId }),
-        });
+      const PLANS: Record<string, { name: string; amount: number }> = {
+        monthly: { name: 'Plan Mensual', amount: 9.99 },
+        annual: { name: 'Plan Anual', amount: 99.99 },
+        lifetime: { name: 'Licencia Definitiva', amount: 199.99 },
+      };
 
-        const result = await response.json();
+      try {
+        const plan = PLANS[planType];
         
-        if (result.success) {
-          console.log('Suscripción pendiente creada:', result.subscription);
-          // Redirigir a Stripe
-          window.open(stripeLink, '_blank');
+        // Crear suscripción directamente en Supabase
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .insert({
+            user_id: userId || null,
+            user_email: email,
+            plan_type: planType,
+            plan_name: plan.name,
+            amount: plan.amount,
+            currency: 'EUR',
+            status: 'pending',
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creando suscripción:', error.message);
+          alert('Error al registrar la suscripción: ' + error.message);
         } else {
-          console.error('Error:', result.error);
-          // Aún así redirigir a Stripe
-          window.open(stripeLink, '_blank');
+          console.log('Suscripción pendiente creada:', data);
         }
+        
+        // Redirigir a Stripe
+        window.open(stripeLink, '_blank');
       } catch (error) {
         console.error('Error creating subscription:', error);
         // Aún así redirigir a Stripe

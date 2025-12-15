@@ -51,24 +51,41 @@ import Layout from '../layouts/Layout.astro';
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      console.log('Usuario actual:', user?.email);
+      
       if (!user?.email) {
+        console.log('No hay usuario autenticado');
         loading?.classList.add('hidden');
         empty?.classList.remove('hidden');
         return;
       }
 
-      const response = await fetch(`/api/subscriptions?email=${encodeURIComponent(user.email)}`);
-      const result = await response.json();
+      // Consultar directamente a Supabase en lugar de usar la API
+      const { data: subscriptions, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_email', user.email)
+        .order('created_at', { ascending: false });
+
+      console.log('Suscripciones encontradas:', subscriptions);
+      console.log('Error de Supabase:', error);
 
       loading?.classList.add('hidden');
 
-      if (!result.success || !result.subscriptions?.length) {
+      if (error) {
+        console.error('Error de Supabase:', error.message);
+        empty?.classList.remove('hidden');
+        return;
+      }
+
+      if (!subscriptions?.length) {
+        console.log('No hay suscripciones');
         empty?.classList.remove('hidden');
         return;
       }
 
       list?.classList.remove('hidden');
-      renderSubscriptions(result.subscriptions);
+      renderSubscriptions(subscriptions);
     } catch (error) {
       console.error('Error loading subscriptions:', error);
       loading?.classList.add('hidden');

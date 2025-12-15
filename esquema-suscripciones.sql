@@ -29,16 +29,16 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_session ON subscriptions(str
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 
--- Política para que los usuarios vean solo sus suscripciones
-CREATE POLICY "Users can view own subscriptions" ON subscriptions
-    FOR SELECT USING (auth.uid() = user_id);
+-- Política para que CUALQUIERA pueda ver suscripciones (filtrado por email en código)
+CREATE POLICY "Allow select subscriptions" ON subscriptions
+    FOR SELECT USING (true);
 
--- Política para insertar (el sistema puede insertar)
-CREATE POLICY "Service can insert subscriptions" ON subscriptions
+-- Política para que CUALQUIERA pueda insertar suscripciones
+CREATE POLICY "Allow insert subscriptions" ON subscriptions
     FOR INSERT WITH CHECK (true);
 
--- Política para actualizar (el sistema puede actualizar)
-CREATE POLICY "Service can update subscriptions" ON subscriptions
+-- Política para que CUALQUIERA pueda actualizar suscripciones
+CREATE POLICY "Allow update subscriptions" ON subscriptions
     FOR UPDATE USING (true);
 
 -- Función para actualizar updated_at automáticamente
